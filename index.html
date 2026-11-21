@@ -63,7 +63,8 @@ h2{font-size:17px;margin:0 0 8px}
 <div class="msg" id="msg"></div>
 
 <section id="vChauf">
- <div id="noCuve" class="card"><h2>Pas de cuve en cours</h2><div class="sm">Prépare la cuve puis touche « Nouvelle cuve ».</div><div style="height:10px"></div><button class="btn" id="newCuve">Nouvelle cuve</button></div>
+ <div id="noCuve" class="card"><h2>Pas de cuve en cours</h2><div class="sm">Le tracé est en pause : rien n'est enregistré. Remplis la cuve puis touche « Nouvelle cuve ».</div><div style="height:10px"></div><button class="btn" id="newCuve">Nouvelle cuve</button></div>
+ <div id="pauseBox" class="msg w hide" style="display:block;font-size:17px;text-align:center">⏸ EN PAUSE – le tracé n'est pas enregistré</div>
  <div id="cuveBox" class="hide">
   <div class="big">
    <div class="k" id="kDone"><div class="v" id="haDone">0,0</div><div class="l">ha traités sur cette cuve</div></div>
@@ -79,7 +80,7 @@ h2{font-size:17px;margin:0 0 8px}
  </div>
  <div id="mapc"><canvas id="map"></canvas><div class="mb"><button id="zIn">+</button><button id="zOut">−</button><button id="follow" class="on" title="Suivre le tracteur">◎</button></div></div>
  <div style="height:8px"></div>
- <div class="row2 hide" id="cuveBtns"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div>
+ <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:8px">⏸ Pause (remplissage, déplacement)</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
  <div class="card"><h2>Aujourd'hui</h2><div id="dayTbl" class="sm">Aucune cuve.</div></div>
  <div class="card"><h2>Parcelles traitées aujourd'hui</h2><div id="parcTbl" class="sm">—</div></div>
 </section>
@@ -193,7 +194,7 @@ function build(pts,cfg,cov0){
  const segs=[];
  for(const p of pts){
   if(p[4]>cfg.acc){continue;}
-  if(prev){const dx=p[1]-prev[1],dy=p[2]-prev[2],d=Math.hypot(dx,dy),dt=(p[0]-prev[0])/1000;
+  if(prev&&!p[5]){const dx=p[1]-prev[1],dy=p[2]-prev[2],d=Math.hypot(dx,dy),dt=(p[0]-prev[0])/1000;
    if(dt>0&&d/dt<=MAXV&&dt<120&&p[3]&&prev[3]){cov.seg([prev[1],prev[2]],[p[1],p[2]],R);dist+=d;segs.push([prev,p,d]);}}
   prev=p;
  }
@@ -202,7 +203,7 @@ function build(pts,cfg,cov0){
 function sprayedHa(pts,cfg,t0,t1){
  let prev=null,d=0;
  for(const p of pts){if(p[0]<t0||(t1&&p[0]>t1))continue;if(p[4]>cfg.acc)continue;
-  if(prev){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3])d+=dd;}
+  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3])d+=dd;}
   prev=p;}
  return {m:d,ha:d*cfg.larg/1e4};
 }
@@ -244,7 +245,7 @@ MapView.prototype.draw=function(){
  /* trace */
  const TR=this.tracks||[{pts:this.pts,col:'#0b3d20'}];
  c.lineWidth=Math.max(1.5/s,0.6);c.lineJoin='round';
- for(const tr of TR){let prev=null;for(const p of tr.pts){if(prev){c.beginPath();c.moveTo(prev[1],prev[2]);c.lineTo(p[1],p[2]);const on=p[3]&&prev[3];c.strokeStyle=on?tr.col:'#7a7a7a';c.setLineDash(on?[]:[4/s,4/s]);c.stroke();}prev=p;}}c.setLineDash([]);
+ for(const tr of TR){let prev=null;for(const p of tr.pts){if(prev&&!p[5]){c.beginPath();c.moveTo(prev[1],prev[2]);c.lineTo(p[1],p[2]);const on=p[3]&&prev[3];c.strokeStyle=on?tr.col:'#7a7a7a';c.setLineDash(on?[]:[4/s,4/s]);c.stroke();}prev=p;}}c.setLineDash([]);
  /* étiquettes */
  if(s>0.3){c.font=(12/s)+'px system-ui';c.textAlign='center';c.fillStyle='#3b2422';
  const seen={};G.g.forEach(g=>{if(g.k!=='prod'||seen[g.n])return;seen[g.n]=1;let sx=0,sy=0;g.p.forEach(q=>{sx+=q[0];sy+=q[1]});c.fillText(g.n.replace('Rivière Noire ','RN ').replace(' (1A + 1B)',''),sx/g.p.length,sy/g.p.length);});}
@@ -288,13 +289,15 @@ function cur(){return S.cur}
 function cuveStats(c){const r=sprayedHa(S.pts,S.cfg,c.start,c.end);return r;}
 function renderChauf(){
  const c=cur();
- $('noCuve').classList.toggle('hide',!!c);$('cuveBox').classList.toggle('hide',!c);$('cuveBtns').classList.toggle('hide',!c);
+ $('noCuve').classList.toggle('hide',!!c);$('pauseBox').classList.toggle('hide',!(c&&S.paused));$('cuveBox').classList.toggle('hide',!c);$('cuveBtns').classList.toggle('hide',!c);
  if(c){const r=cuveStats(c),pct=r.ha/c.obj;
   $('haDone').textContent=f1(r.ha);const left=c.obj-r.ha;
   $('haLeft').textContent=f1(Math.abs(left));$('lLeft').textContent=left>=0?'ha restants pour vider la cuve ('+f0(left*1e4/S.cfg.larg)+' m de trace)':'ha AU-DELÀ de l\'objectif';
   $('kLeft').className='k '+(left>=0?'r':'o');$('kDone').className='k g';
   $('cuveTitle').textContent='Cuve n° '+c.n+' · '+c.vol+' L';$('cuveMeta').textContent='objectif '+f1(c.obj)+' ha · depuis '+hm(c.start);
   const b=$('cuveBar');b.style.width=Math.min(100,pct*100)+'%';b.className=pct>1.1?'bad':pct>1?'warn':'';
+  $('pauseBtn').textContent=S.paused?'▶ Reprendre le traitement':'⏸ Pause (remplissage, déplacement)';$('pauseBtn').className='btn '+(S.paused?'':'org');
+  $('spray').classList.toggle('hide',!!S.paused);
   const sp=$('spray');sp.className='btn '+(S.on?'on':'off');sp.textContent=S.on?'CANON EN MARCHE – toucher pour arrêter':'CANON ARRÊTÉ – toucher pour démarrer';
  }
  /* parcelle courante */
@@ -315,12 +318,14 @@ function addPoint(lat,lon,acc,t){
  const[x,y]=toXY(lat,lon);lastPos=[x,y];
  M1.pos=[x,y,acc];
  $('gpsDot').className='dot '+(acc<=S.cfg.acc?'on':'off');$('gpsTxt').textContent='GPS ± '+Math.round(acc)+' m';
+ if(!S.cur||S.paused){renderChauf();M1.draw();liveState();return;}
  const p=[t,Math.round(x*10)/10,Math.round(y*10)/10,S.on&&S.cur?1:0,Math.round(acc)];
- const last=S.pts[S.pts.length-1];
+ if(S.brk)p[5]=1;
+ const last=S.brk?null:S.pts[S.pts.length-1];
  const moved=!last||Math.hypot(p[1]-last[1],p[2]-last[2])>=3||last[3]!==p[3]||t-last[0]>60000;
  if(moved&&acc<=Math.max(S.cfg.acc*2,60)){
   if(last&&p[3]&&last[3]&&acc<=S.cfg.acc&&last[4]<=S.cfg.acc){const dt=(t-last[0])/1000,d=Math.hypot(p[1]-last[1],p[2]-last[2]);if(dt>0&&d/dt<=MAXV&&dt<120){built.cov.seg([last[1],last[2]],[p[1],p[2]],S.cfg.larg/2);M1.setCov(built.cov);}}
-  S.pts.push(p);
+  S.pts.push(p);S.brk=false;
  }
  checkAlerts();
  renderChauf();M1.draw();
@@ -341,10 +346,14 @@ function checkAlerts(){
 let pendExit=null;
 /* envoi bureau */
 let liveT=0,ptsT=0;
+function etat(){return S.cur?(S.paused?'pause':'cuve'):'attente';}
+let lastEtat=null;
+function liveState(force){if(!FB.ok)return;const e=etat();if(!force&&e===lastEtat&&Date.now()-liveT<60000)return;lastEtat=e;liveT=Date.now();const c=cur();
+ fbSet('live/'+WID(),{who:S.who||'',t:Date.now(),etat:e,on:0,day:S.day,cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:cuveStats(c).ha,start:c.start}:null});}
 function liveSend(p){
  if(!FB.ok)return;const now=Date.now();
  if(now-liveT>5000){liveT=now;const c=cur();const r=c?cuveStats(c):null;
-  fbSet('live/'+WID(),{who:S.who||'',t:p[0],x:p[1],y:p[2],acc:p[4],on:p[3],day:S.day,parc:lastPos?(NAMES[parcAt(lastPos[0],lastPos[1])-1]||''):'',cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:r.ha,start:c.start}:null});}
+  lastEtat=etat();fbSet('live/'+WID(),{who:S.who||'',etat:etat(),t:p[0],x:p[1],y:p[2],acc:p[4],on:p[3],day:S.day,parc:lastPos?(NAMES[parcAt(lastPos[0],lastPos[1])-1]||''):'',cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:r.ha,start:c.start}:null});}
  if(now-ptsT>20000)flushPts();
 }
 function flushPts(){
@@ -373,9 +382,9 @@ document.querySelectorAll('.vols button').forEach(b=>b.onclick=()=>{selVol=+b.da
 $('volFree').oninput=()=>{selVol=null;document.querySelectorAll('.vols button').forEach(x=>x.classList.remove('sel'));showObj();};
 $('mCancel').onclick=()=>$('mCuve').classList.add('hide');
 $('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(!(v>0))return;
- const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now};S.on=false;
+ const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now};S.on=false;S.paused=false;S.brk=true;
  $('mCuve').classList.add('hide');say('Cuve '+n+' : '+v+' litres, objectif '+f1(v/S.cfg.dose)+' hectares.');keepAwake();sendCuve(S.cur);renderChauf();};
-$('spray').onclick=()=>{S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();};
+$('spray').onclick=()=>{if(S.paused)return;S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();};
 $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
  let t='Cuve '+c.n+' : '+f1(r.ha)+' ha traités pour un objectif de '+f1(c.obj)+' ha ('+(e>0?'+':'')+Math.round(e*100)+' %).';
  if(e<-.1)t+='<br><b class="ko">Cuve vidée trop tôt : surdosage probable (vitesse trop lente ou débit trop fort).</b>';
@@ -383,9 +392,10 @@ $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
  else t+='<br><b class="ok">Dose respectée.</b>';
  $('endTxt').innerHTML=t;$('mEnd').classList.remove('hide');};
 $('eBack').onclick=()=>$('mEnd').classList.add('hide');
-$('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;$('mEnd').classList.add('hide');
- const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent.');sendCuve(c);flushPts();renderChauf();};
-$('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){S.cur=null;S.on=false;delete b.dataset.c;b.textContent='Annuler la cuve';renderChauf();}else{b.dataset.c=1;b.textContent='Confirmer l\'annulation';setTimeout(()=>{delete b.dataset.c;b.textContent='Annuler la cuve'},4000);}};
+$('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
+ liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent.');sendCuve(c);flushPts();renderChauf();};
+$('pauseBtn').onclick=()=>{S.paused=!S.paused;if(S.paused){S.on=false;S.brk=true;say('Pause. Le tracé est arrêté.');}else{S.brk=true;say('Reprise du traitement. Pense à démarrer le canon.');}renderChauf();M1.draw();liveState(true);};
+$('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){S.cur=null;S.on=false;S.paused=false;S.brk=true;liveState(true);delete b.dataset.c;b.textContent='Annuler la cuve';renderChauf();}else{b.dataset.c=1;b.textContent='Confirmer l\'annulation';setTimeout(()=>{delete b.dataset.c;b.textContent='Annuler la cuve'},4000);}};
 $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M1.setFollow(false);M1.zoom(1/1.4)};$('follow').onclick=()=>{M1.setFollow(!M1.follow);if(!M1.follow){M1.fit();}M1.draw();};
 
 /* réglages */
@@ -429,8 +439,8 @@ function renderBureau(){
  const B={cov};M2.setCov(cov);M2.tracks=tracks;
  const today=bDay===dayOf(Date.now());
  const lv=Object.values(bLive).filter(x=>x.day===bDay);
- M2.others=today?lv.map(x=>({x:x.x,y:x.y,acc:x.acc,label:x.who||'?',col:col(x.who||'?')})):[];
- if(today&&lv.length){$('bLive').innerHTML=lv.map(x=>{const age=Math.round((Date.now()-x.t)/60000);return '<div style="margin:4px 0"><span class="dot '+(age<3?'on':'off')+'"></span><b style="color:'+col(x.who||'?')+'">'+(x.who||'?')+'</b> vu à '+hm(x.t)+(age>=3?' (il y a '+age+' min)':'')+' · '+(x.parc||'hors parcelle')+' · canon '+(x.on?'<b class="ok">en marche</b>':'arrêté')+(x.cuve?' · cuve '+x.cuve.n+' : '+f1(x.cuve.ha)+' / '+f1(x.cuve.obj)+' ha':'')+'</div>'}).join('');}
+ M2.others=today?lv.filter(x=>x.etat!=='pause'&&x.etat!=='attente').map(x=>({x:x.x,y:x.y,acc:x.acc,label:x.who||'?',col:col(x.who||'?')})):[];
+ if(today&&lv.length){$('bLive').innerHTML=lv.map(x=>{const age=Math.round((Date.now()-x.t)/60000);return '<div style="margin:4px 0"><span class="dot '+(age<3?'on':'off')+'"></span><b style="color:'+col(x.who||'?')+'">'+(x.who||'?')+'</b> vu à '+hm(x.t)+(age>=3?' (il y a '+age+' min)':'')+(x.etat==='pause'?' · <b class="wa">EN PAUSE</b>':x.etat==='attente'?' · <b>entre deux cuves</b>':' · '+(x.parc||'hors parcelle')+' · canon '+(x.on?'<b class="ok">en marche</b>':'arrêté'))+(x.cuve?' · cuve '+x.cuve.n+' : '+f1(x.cuve.ha)+' / '+f1(x.cuve.obj)+' ha':'')+'</div>'}).join('');}
  else if(FB.ok)$('bLive').textContent=today?'Aucun tracteur vu aujourd\'hui.':'Journée du '+bDay.split('-').reverse().join('/');
  const cs=Object.values(bCuves).sort((a,b)=>a.start-b.start);
  let haT=0,volT=0;cs.forEach(c=>{haT+=c.ha||0;volT+=c.end?c.vol:0;});
