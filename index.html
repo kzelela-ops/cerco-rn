@@ -148,9 +148,9 @@ const hm=t=>{const d=new Date(t);return pad(d.getHours())+'h'+pad(d.getMinutes()
 const KEY='cerco_rn_v1';
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
-const DEF_CFG={dose:50,larg:25,side:'D',acc:30,seuil:85};const SW=c=>c.larg*(c.side==='2'?2:1);
+const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85};const SW=c=>c.larg*(c.side==='2'?2:1);
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
-S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}
+S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;}
 if(S.day!==dayOf(Date.now()))newDay();
