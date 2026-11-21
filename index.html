@@ -431,7 +431,7 @@ if(location.hash==='#bureau')t0='b';if(location.hash==='#chauffeur')t0='c';
 renderChauf();showTab(t0);
 initFB();
 window.addEventListener('online',()=>flushPts());
-window.__cerco={S,addPoint,NAMES,toXY};
+window.__cerco={S,addPoint,NAMES,toXY,FB};fbHooks.push(()=>{if(!$('vBur').classList.contains('hide'))subBureau();});
 })();
 </script>
 </body>
