@@ -97,7 +97,8 @@ h2{font-size:17px;margin:0 0 8px}
 <div class="card sm" style="margin-top:10px">
  <details><summary>Réglages</summary>
  <label>Dose (L/ha de bouillie)<input type="number" id="cDose" step="any"></label>
- <label>Largeur traitée totale (m)<input type="number" id="cLarg" step="any"></label>
+ <label>Portée du canon (m)<input type="number" id="cLarg" step="any"></label>
+ <label>Côté traité<select id="cSide" style="font-size:18px;padding:10px;width:100%"><option value="D">À droite du tracteur</option><option value="G">À gauche du tracteur</option><option value="2">Des deux côtés</option></select></label>
  <label>Précision GPS minimale acceptée (m)<input type="number" id="cAcc" step="any"></label>
  <label>Seuil d'alerte parcelle incomplète (%)<input type="number" id="cSeuil" step="any"></label>
  <div style="height:8px"></div><button class="btn sec" id="cTest">Tester la voix</button>
@@ -147,9 +148,9 @@ const hm=t=>{const d=new Date(t);return pad(d.getHours())+'h'+pad(d.getMinutes()
 const KEY='cerco_rn_v1';
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
-const DEF_CFG={dose:50,larg:40,acc:30,seuil:85};
+const DEF_CFG={dose:50,larg:25,side:'D',acc:30,seuil:85};const SW=c=>c.larg*(c.side==='2'?2:1);
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
-S.cfg=Object.assign({},DEF_CFG,S.cfg||{});
+S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;}
 if(S.day!==dayOf(Date.now()))newDay();
@@ -175,6 +176,7 @@ function parcAt(x,y){const cx=Math.round(x/CELL),cy=Math.round(y/CELL);if(cx<0||
 
 /* couverture : cellules touchées par la bande de traitement */
 function Cover(){this.c=new Uint8Array(GW*GH);this.n=new Uint32Array(NAMES.length+1);}
+Cover.prototype.band=function(a,b,cfg){const W=cfg.larg;if(cfg.side==='2')return this.seg(a,b,W);const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,o=(cfg.side==='G'?-1:1)*W/2,nx=-dy/L*o,ny=dx/L*o;this.seg([a[0]+nx,a[1]+ny],[b[0]+nx,b[1]+ny],W/2);};
 Cover.prototype.seg=function(a,b,R){
  const minx=Math.max(0,Math.floor((Math.min(a[0],b[0])-R)/CELL)),maxx=Math.min(GW-1,Math.ceil((Math.max(a[0],b[0])+R)/CELL));
  const miny=Math.max(0,Math.floor((Math.min(a[1],b[1])-R)/CELL)),maxy=Math.min(GH-1,Math.ceil((Math.max(a[1],b[1])+R)/CELL));
@@ -195,7 +197,7 @@ function build(pts,cfg,cov0){
  for(const p of pts){
   if(p[4]>cfg.acc){continue;}
   if(prev&&!p[5]){const dx=p[1]-prev[1],dy=p[2]-prev[2],d=Math.hypot(dx,dy),dt=(p[0]-prev[0])/1000;
-   if(dt>0&&d/dt<=MAXV&&dt<120&&p[3]&&prev[3]){cov.seg([prev[1],prev[2]],[p[1],p[2]],R);dist+=d;segs.push([prev,p,d]);}}
+   if(dt>0&&d/dt<=MAXV&&dt<120&&p[3]&&prev[3]){cov.band([prev[1],prev[2]],[p[1],p[2]],cfg);dist+=d;segs.push([prev,p,d]);}}
   prev=p;
  }
  return {cov,dist,segs};
@@ -205,7 +207,7 @@ function sprayedHa(pts,cfg,t0,t1){
  for(const p of pts){if(p[0]<t0||(t1&&p[0]>t1))continue;if(p[4]>cfg.acc)continue;
   if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3])d+=dd;}
   prev=p;}
- return {m:d,ha:d*cfg.larg/1e4};
+ return {m:d,ha:d*SW(cfg)/1e4};
 }
 
 /* ---------- carte ---------- */
@@ -252,7 +254,7 @@ MapView.prototype.draw=function(){
  /* position */
  if(this.pos){const[x,y,acc,hd]=this.pos;c.beginPath();c.arc(x,y,Math.max(acc||5,2),0,7);c.fillStyle='rgba(30,120,255,.15)';c.fill();
   c.beginPath();c.arc(x,y,7/s,0,7);c.fillStyle='#1e78ff';c.fill();c.lineWidth=2.5/s;c.strokeStyle='#fff';c.stroke();
-  if(this.larg){c.beginPath();c.arc(x,y,this.larg/2,0,7);c.setLineDash([3/s,3/s]);c.strokeStyle='rgba(30,120,255,.6)';c.lineWidth=1/s;c.stroke();c.setLineDash([]);}}
+  if(this.larg){c.beginPath();c.arc(x,y,this.larg,0,7);c.setLineDash([3/s,3/s]);c.strokeStyle='rgba(30,120,255,.6)';c.lineWidth=1/s;c.stroke();c.setLineDash([]);}}
  for(const o of this.others){c.beginPath();c.arc(o.x,o.y,Math.max(o.acc||5,2),0,7);c.fillStyle='rgba(0,0,0,.08)';c.fill();c.beginPath();c.arc(o.x,o.y,8/s,0,7);c.fillStyle=o.col;c.fill();c.lineWidth=2.5/s;c.strokeStyle='#fff';c.stroke();c.font='bold '+(13/s)+'px system-ui';c.textAlign='left';c.lineWidth=3/s;c.strokeText(o.label,o.x+11/s,o.y+4/s);c.fillStyle=o.col;c.fillText(o.label,o.x+11/s,o.y+4/s);}
  c.restore();
 };
@@ -292,7 +294,7 @@ function renderChauf(){
  $('noCuve').classList.toggle('hide',!!c);$('pauseBox').classList.toggle('hide',!(c&&S.paused));$('cuveBox').classList.toggle('hide',!c);$('cuveBtns').classList.toggle('hide',!c);
  if(c){const r=cuveStats(c),pct=r.ha/c.obj;
   $('haDone').textContent=f1(r.ha);const left=c.obj-r.ha;
-  $('haLeft').textContent=f1(Math.abs(left));$('lLeft').textContent=left>=0?'ha restants pour vider la cuve ('+f0(left*1e4/S.cfg.larg)+' m de trace)':'ha AU-DELÀ de l\'objectif';
+  $('haLeft').textContent=f1(Math.abs(left));$('lLeft').textContent=left>=0?'ha restants pour vider la cuve ('+f0(left*1e4/SW(S.cfg))+' m de trace)':'ha AU-DELÀ de l\'objectif';
   $('kLeft').className='k '+(left>=0?'r':'o');$('kDone').className='k g';
   $('cuveTitle').textContent='Cuve n° '+c.n+' · '+c.vol+' L';$('cuveMeta').textContent='objectif '+f1(c.obj)+' ha · depuis '+hm(c.start);
   const b=$('cuveBar');b.style.width=Math.min(100,pct*100)+'%';b.className=pct>1.1?'bad':pct>1?'warn':'';
@@ -324,7 +326,7 @@ function addPoint(lat,lon,acc,t){
  const last=S.brk?null:S.pts[S.pts.length-1];
  const moved=!last||Math.hypot(p[1]-last[1],p[2]-last[2])>=3||last[3]!==p[3]||t-last[0]>60000;
  if(moved&&acc<=Math.max(S.cfg.acc*2,60)){
-  if(last&&p[3]&&last[3]&&acc<=S.cfg.acc&&last[4]<=S.cfg.acc){const dt=(t-last[0])/1000,d=Math.hypot(p[1]-last[1],p[2]-last[2]);if(dt>0&&d/dt<=MAXV&&dt<120){built.cov.seg([last[1],last[2]],[p[1],p[2]],S.cfg.larg/2);M1.setCov(built.cov);}}
+  if(last&&p[3]&&last[3]&&acc<=S.cfg.acc&&last[4]<=S.cfg.acc){const dt=(t-last[0])/1000,d=Math.hypot(p[1]-last[1],p[2]-last[2]);if(dt>0&&d/dt<=MAXV&&dt<120){built.cov.band([last[1],last[2]],[p[1],p[2]],S.cfg);M1.setCov(built.cov);}}
   S.pts.push(p);S.brk=false;
  }
  checkAlerts();
@@ -361,7 +363,7 @@ function flushPts(){
  const chunk=S.pts.slice(S.sent||0,n);const id=WID()+'_'+chunk[0][0];
  fbSet('jours/'+S.day+'/pts/'+id,{who:S.who||'',p:JSON.stringify(chunk),n:chunk.length});S.sent=n;save();
 }
-function sendCuve(c){const r=cuveStats(c);fbSet('jours/'+S.day+'/cuves/'+WID()+'_'+c.id,{who:S.who||'',n:c.n,vol:c.vol,obj:c.obj,start:c.start,end:c.end||null,ha:r.ha,dose:S.cfg.dose,larg:S.cfg.larg});fbSet('jours/'+S.day,{maj:Date.now()});}
+function sendCuve(c){const r=cuveStats(c);fbSet('jours/'+S.day+'/cuves/'+WID()+'_'+c.id,{who:S.who||'',n:c.n,vol:c.vol,obj:c.obj,start:c.start,end:c.end||null,ha:r.ha,dose:S.cfg.dose,larg:S.cfg.larg,side:S.cfg.side});fbSet('jours/'+S.day,{maj:Date.now()});}
 fbHooks.push(()=>{S.cuves.forEach(sendCuve);if(S.cur)sendCuve(S.cur);flushPts();});
 
 /* GPS */
@@ -376,7 +378,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
 /* boutons chauffeur */
 let selVol=null;
-function showObj(){const v=selVol||parseFloat($('volFree').value);$('volObj').innerHTML=v>0?'Objectif : <b>'+f1(v/S.cfg.dose)+' ha</b> à '+S.cfg.dose+' L/ha, soit environ <b>'+f1(v/S.cfg.dose*1e4/S.cfg.larg/1000)+' km</b> de trace':'&nbsp;';}
+function showObj(){const v=selVol||parseFloat($('volFree').value);$('volObj').innerHTML=v>0?'Objectif : <b>'+f1(v/S.cfg.dose)+' ha</b> à '+S.cfg.dose+' L/ha, soit environ <b>'+f1(v/S.cfg.dose*1e4/SW(S.cfg)/1000)+' km</b> de trace':'&nbsp;';}
 $('newCuve').onclick=()=>{if(!S.who){askWho();return;}selVol=null;$('volFree').value='';document.querySelectorAll('.vols button').forEach(b=>b.classList.remove('sel'));showObj();$('mCuve').classList.remove('hide');};
 document.querySelectorAll('.vols button').forEach(b=>b.onclick=()=>{selVol=+b.dataset.v;$('volFree').value='';document.querySelectorAll('.vols button').forEach(x=>x.classList.toggle('sel',x===b));showObj();});
 $('volFree').oninput=()=>{selVol=null;document.querySelectorAll('.vols button').forEach(x=>x.classList.remove('sel'));showObj();};
@@ -400,6 +402,7 @@ $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M
 
 /* réglages */
 [['cDose','dose'],['cLarg','larg'],['cAcc','acc'],['cSeuil','seuil']].forEach(([id,k])=>{const e=$(id);e.value=S.cfg[k];e.onchange=()=>{const v=parseFloat(e.value);if(v>0){S.cfg[k]=v;M1.larg=S.cfg.larg;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();}};});
+$('cSide').value=S.cfg.side;$('cSide').onchange=()=>{S.cfg.side=$('cSide').value;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();};
 function askWho(){$('whoIn').value=S.who||'';$('mWho').classList.remove('hide');setTimeout(()=>$('whoIn').focus(),100);}
 $('whoOk').onclick=()=>{const v=$('whoIn').value.trim();if(!v)return;S.who=v;save();$('mWho').classList.add('hide');showWho();if(S.cur)sendCuve(S.cur);};
 $('cWho').onclick=askWho;
