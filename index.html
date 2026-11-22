@@ -344,7 +344,7 @@ function renderParcTbl(el,cov){
  el.innerHTML=L.length?'<table><tr><th>Parcelle</th><th class="n">Surface</th><th class="n">Couverte</th></tr>'+L.map(r=>'<tr><td>'+r[0]+'</td><td class="n">'+f1(r[2])+' ha</td><td class="n '+(r[1]*100>=S.cfg.seuil?'ok':r[1]>.5?'wa':'ko')+'">'+Math.round(r[1]*100)+' %</td></tr>').join('')+'</table>':'—';
 }
 function addPoint(lat,lon,acc,t){
- const[x,y]=toXY(lat,lon);lastPos=[x,y];
+ const[x,y]=toXY(lat,lon);lastPos=[x,y];trackStill(x,y,t);
  M1.pos=[x,y,acc];
  $('gpsDot').className='dot '+(acc<=S.cfg.acc?'on':'off');$('gpsTxt').textContent='GPS ± '+Math.round(acc)+' m';
  if(!S.cur||S.paused){lightRender();liveState();return;}
@@ -373,6 +373,24 @@ function checkAlerts(){
    if(pc<S.cfg.seuil&&pc>30){const t=NAMES[k-1]+' quittée, couverte à '+Math.round(pc)+' pour cent. Il reste des traces.';say(t);msg(t,'w');}}}
 }
 let pendExit=null;
+/* ---------- notifications ntfy (téléphone de Kévin) ---------- */
+const NTFY='https://ntfy.sh/cerco-rn-1a3266befb';
+if(!S.nq)S.nq=[];
+function notif(title,body,tag,prio){S.nq.push({title,body,tag:tag||'',prio:prio||3,t:Date.now()});save();sendNotifs();}
+let nBusy=false;
+async function sendNotifs(){if(nBusy||!S.nq.length||!navigator.onLine)return;nBusy=true;
+ try{while(S.nq.length){const n=S.nq[0];const late=Date.now()-n.t>120000?' (envoyé en retard, réseau coupé)':'';
+  const r=await fetch(NTFY+'?title='+encodeURIComponent(n.title)+'&tags='+encodeURIComponent(n.tag)+'&priority='+n.prio,{method:'POST',body:n.body+late});
+  if(!r.ok)break;S.nq.shift();save();}}catch(e){}nBusy=false;}
+setInterval(sendNotifs,60000);window.addEventListener('online',sendNotifs);
+const who=()=>S.who||'Chauffeur';
+const parcNow=()=>{if(!lastPos)return '';const i=parcAt(lastPos[0],lastPos[1]);return i?NAMES[i-1]:'hors parcelle';};
+/* tracteur immobile : cuve en cours, pas en pause, moins de 15 m en 10 min */
+let anchor=null,anchorT=0,stillSent=false;
+function trackStill(x,y,t){if(!S.cur||S.paused){anchor=null;stillSent=false;return;}
+ if(!anchor||Math.hypot(x-anchor[0],y-anchor[1])>15){if(stillSent){notif(who()+' repart','Le tracteur roule à nouveau à '+hm(t)+' ('+parcNow()+'), après '+Math.round((t-anchorT)/60000)+' min à l\'arrêt.','arrow_forward',3);}anchor=[x,y];anchorT=t;stillSent=false;return;}
+ if(!stillSent&&t-anchorT>600000){stillSent=true;notif(who()+' immobile','Cuve '+S.cur.n+' en cours mais tracteur arrêté depuis '+hm(anchorT)+' ('+parcNow()+'), sans pause.','warning',4);}}
+setInterval(()=>{if(lastPos&&S.cur&&!S.paused)trackStill(lastPos[0],lastPos[1],Date.now());},60000);
 /* rendu économe : en mode poche seulement l'écran noir ; sinon au plus toutes les 3 s */
 let lrT=0;
 function lightRender(){const now=Date.now();if(POCHE){renderPoche();return;}if(document.visibilityState!=='visible')return;if(now-lrT<3000)return;lrT=now;renderChauf();M1.draw();}
@@ -425,7 +443,7 @@ $('volFree').oninput=()=>{selVol=null;document.querySelectorAll('.vols button').
 $('mCancel').onclick=()=>$('mCuve').classList.add('hide');
 $('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(!(v>0))return;const P=prepOf(v);if(P.L.length&&!$('prepChk').checked){msg('Coche « Cuve préparée selon la consigne » avant de démarrer.','w');say('Cochez cuve préparée avant de démarrer.');return;}
  const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now,prep:P.L,eau:P.eau};S.on=false;S.paused=false;S.brk=true;
- $('mCuve').classList.add('hide');say('Cuve '+n+' : '+v+' litres, objectif '+f1(v/S.cfg.dose)+' hectares.');keepAwake();sendCuve(S.cur);renderChauf();};
+ $('mCuve').classList.add('hide');say('Cuve '+n+' : '+v+' litres, objectif '+f1(v/S.cfg.dose)+' hectares.');notif(who()+' : cuve '+n+' démarrée',v+' L à '+hm(now)+', objectif '+f1(v/S.cfg.dose)+' ha'+(P.L.length?' · '+P.L.map(x=>x.nom+' '+x.q.toLocaleString('fr-FR')+' '+x.u).join(', '):' · sans consigne')+'.','seedling',3);keepAwake();sendCuve(S.cur);renderChauf();};
 $('spray').onclick=()=>{if(S.paused)return;S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();};
 $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
  let t='Cuve '+c.n+' : '+f1(r.ha)+' ha traités pour un objectif de '+f1(c.obj)+' ha ('+(e>0?'+':'')+Math.round(e*100)+' %).';
@@ -436,6 +454,7 @@ $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
 $('eBack').onclick=()=>$('mEnd').classList.add('hide');
 $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
  liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Bon d\'intervention enregistré.');sendCuve(c);flushPts();
+ notif(who()+' : cuve '+c.n+' terminée',hm(c.start)+' – '+hm(c.end)+' · '+f1(r.ha)+' ha pour '+f1(c.obj)+' prévus ('+(e>0?'+':'')+Math.round(e*100)+' %).','white_check_mark',3);
  const bon=makeBon(c);S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
@@ -453,8 +472,8 @@ function bonHtml(b){const du=Math.round((b.end-b.start)/60000);
 $('bonOk').onclick=()=>$('mBon').classList.add('hide');
 $('pocheBtn').onclick=()=>setPoche(true);$('pExit').onclick=()=>setPoche(false);
 $('pCanon').onclick=()=>{$('spray').onclick();renderPoche();};
-$('pauseBtn').onclick=()=>{S.paused=!S.paused;if(S.paused){S.on=false;S.brk=true;say('Pause. Le tracé est arrêté.');}else{S.brk=true;say('Reprise du traitement. Pense à démarrer le canon.');}renderChauf();M1.draw();liveState(true);};
-$('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){S.cur=null;S.on=false;S.paused=false;S.brk=true;liveState(true);delete b.dataset.c;b.textContent='Annuler la cuve';renderChauf();}else{b.dataset.c=1;b.textContent='Confirmer l\'annulation';setTimeout(()=>{delete b.dataset.c;b.textContent='Annuler la cuve'},4000);}};
+$('pauseBtn').onclick=()=>{S.paused=!S.paused;const now=Date.now();if(S.paused){S.on=false;S.brk=true;S.pauseT=now;say('Pause. Le tracé est arrêté.');notif(who()+' en PAUSE','Pause à '+hm(now)+' · cuve '+S.cur.n+' · '+parcNow()+' · '+f1(cuveStats(S.cur).ha)+' / '+f1(S.cur.obj)+' ha faits.','pause_button',4);}else{S.brk=true;say('Reprise du traitement. Pense à démarrer le canon.');notif(who()+' reprend','Reprise à '+hm(now)+(S.pauseT?' après '+Math.round((now-S.pauseT)/60000)+' min de pause':'')+' · '+parcNow()+'.','arrow_forward',3);}renderChauf();M1.draw();liveState(true);};
+$('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){if(S.cur)notif(who()+' : cuve '+S.cur.n+' annulée','Annulée à '+hm(Date.now())+'.','x',3);S.cur=null;S.on=false;S.paused=false;S.brk=true;liveState(true);delete b.dataset.c;b.textContent='Annuler la cuve';renderChauf();}else{b.dataset.c=1;b.textContent='Confirmer l\'annulation';setTimeout(()=>{delete b.dataset.c;b.textContent='Annuler la cuve'},4000);}};
 $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M1.setFollow(false);M1.zoom(1/1.4)};$('follow').onclick=()=>{M1.setFollow(!M1.follow);if(!M1.follow){M1.fit();}M1.draw();};
 
 /* réglages */
