@@ -54,6 +54,12 @@ td.n,th.n{text-align:right}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9}
 .modal .card{width:100%;max-width:520px;margin:0;border-radius:16px 16px 0 0;padding:18px}
 h2{font-size:17px;margin:0 0 8px}
+.wxh{display:flex;justify-content:space-between;align-items:baseline}
+.wxs{margin:8px 0;padding:10px;border-radius:10px;font-weight:700;font-size:16px;background:#eef1ea}
+.wxs.ok{background:#d1e7dd;color:#0f5132}.wxs.w{background:#fff3cd;color:#7a5600}.wxs.e{background:#f8d7da;color:#842029}
+.wxg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.wxg div{background:#f3f5f0;border-radius:8px;padding:6px 2px}.wxg b{display:block;font-size:18px}.wxg span{font-size:11px;color:var(--mut)}
+.wxh2{display:flex;gap:4px;margin-top:8px;overflow-x:auto}.wxh2 div{flex:1;min-width:44px;text-align:center;font-size:11px;background:#f3f5f0;border-radius:6px;padding:4px 2px}.wxh2 b{display:block;font-size:13px}
 #poche{position:fixed;inset:0;background:#000;color:#9fd8b0;z-index:20;display:flex;flex-direction:column;justify-content:space-between;padding:22px 16px;text-align:center}
 #poche .pv{font-size:64px;font-weight:800;color:#e8ffe9;line-height:1}
 #poche .pl{font-size:15px;color:#6f9c7c;margin-top:4px}
@@ -96,6 +102,7 @@ h2{font-size:17px;margin:0 0 8px}
   <div style="height:8px"></div><button class="btn sec" id="pocheBtn">🌙 Mode poche (le téléphone chauffe moins)</button>
   <div style="height:8px"></div>
  </div>
+ <div class="card wx" id="wx1"><div class="wxh"><b>Météo</b><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:15px">Carte vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:15px">Carte pluie (Windy)</button></div></div>
  <div id="mapc"><canvas id="map"></canvas><div class="mb"><button id="zIn">+</button><button id="zOut">−</button><button id="follow" class="on" title="Suivre le tracteur">◎</button></div></div>
  <div style="height:8px"></div>
  <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:8px">⏸ Pause (remplissage, déplacement)</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
@@ -105,6 +112,7 @@ h2{font-size:17px;margin:0 0 8px}
 
 <section id="vBur" class="hide">
  <div class="card"><div class="row2" style="margin:0"><input type="date" id="bDay"><button class="btn sec" id="bToday" style="padding:10px">Aujourd'hui</button></div><div class="sm" id="bLive" style="margin-top:8px">—</div></div>
+ <div class="card wx" id="wx2"><div class="wxh"><b>Météo</b><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:15px">Carte vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:15px">Carte pluie (Windy)</button></div></div>
  <div class="big" id="bK"></div>
  <div style="height:8px"></div>
  <div id="mapc2"></div>
@@ -121,6 +129,8 @@ h2{font-size:17px;margin:0 0 8px}
  <label>Côté traité<select id="cSide" style="font-size:18px;padding:10px;width:100%"><option value="D">À droite du tracteur</option><option value="G">À gauche du tracteur</option><option value="2">Des deux côtés</option></select></label>
  <label>Précision GPS minimale acceptée (m)<input type="number" id="cAcc" step="any"></label>
  <label>Seuil d'alerte parcelle incomplète (%)<input type="number" id="cSeuil" step="any"></label>
+ <label>Vent maximum pour traiter (km/h)<input type="number" id="cVent" step="any"></label>
+ <label>Alerte pluie dans les (heures)<input type="number" id="cPluie" step="any"></label>
  <div style="height:8px"></div><button class="btn sec" id="cTest">Tester la voix</button>
  <div style="height:8px"></div><button class="btn sec" id="cWho">Changer de chauffeur</button>
  <p>Pour un relevé fiable : écran allumé, téléphone branché dans la cabine, application ouverte au premier plan.</p>
@@ -137,6 +147,10 @@ h2{font-size:17px;margin:0 0 8px}
  <div id="prep"></div>
  <label class="chk hide" id="prepChkL"><input type="checkbox" id="prepChk"> Cuve préparée selon la consigne</label>
  <div class="row2"><button class="btn sec" id="mCancel">Retour</button><button class="btn" id="mOk">Démarrer</button></div>
+</div></div>
+<div class="modal hide" id="mWin"><div class="card" style="max-width:900px;padding:10px">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="margin:0">Windy – Rivière Noire</h2><button class="btn sec" id="winClose" style="width:auto;padding:8px 16px;font-size:15px">Fermer</button></div>
+ <iframe id="winFrame" style="width:100%;height:70vh;border:0;border-radius:10px" loading="lazy"></iframe>
 </div></div>
 <div class="modal hide" id="mWho"><div class="card">
  <h2>Qui conduit ?</h2><div class="sm">Ton prénom (ou le nom du tracteur). Il sert à te reconnaître au bureau.</div>
@@ -172,7 +186,7 @@ const hm=t=>{const d=new Date(t);return pad(d.getHours())+'h'+pad(d.getMinutes()
 const KEY='cerco_rn_v1';
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
-const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85};const SW=c=>c.larg*(c.side==='2'?2:1);
+const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85,ventMax:19,pluieH:2};const SW=c=>c.larg*(c.side==='2'?2:1);
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
 S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -477,7 +491,7 @@ $('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){if(S.cur)notif(w
 $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M1.setFollow(false);M1.zoom(1/1.4)};$('follow').onclick=()=>{M1.setFollow(!M1.follow);if(!M1.follow){M1.fit();}M1.draw();};
 
 /* réglages */
-[['cDose','dose'],['cLarg','larg'],['cAcc','acc'],['cSeuil','seuil']].forEach(([id,k])=>{const e=$(id);e.value=S.cfg[k];e.onchange=()=>{const v=parseFloat(e.value);if(v>0){S.cfg[k]=v;M1.larg=S.cfg.larg;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();}};});
+[['cDose','dose'],['cLarg','larg'],['cAcc','acc'],['cSeuil','seuil'],['cVent','ventMax'],['cPluie','pluieH']].forEach(([id,k])=>{const e=$(id);e.value=S.cfg[k];e.onchange=()=>{const v=parseFloat(e.value);if(v>0){S.cfg[k]=v;M1.larg=S.cfg.larg;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();}};});
 $('cSide').value=S.cfg.side;$('cSide').onchange=()=>{S.cfg.side=$('cSide').value;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();};
 function askWho(){$('whoIn').value=S.who||'';$('mWho').classList.remove('hide');setTimeout(()=>$('whoIn').focus(),100);}
 $('whoOk').onclick=()=>{const v=$('whoIn').value.trim();if(!v)return;S.who=v;save();$('mWho').classList.add('hide');showWho();if(S.cur)sendCuve(S.cur);};
@@ -542,6 +556,49 @@ function renderBureau(){
  renderParcTbl($('bParc'),B.cov);
  M2.draw();
 }
+
+/* ======================= MÉTÉO ======================= */
+const WX_LAT=14.8115,WX_LON=-61.1170;
+if(S.cfg.ventMax==null)S.cfg.ventMax=19;if(S.cfg.pluieH==null)S.cfg.pluieH=2;
+let WX=null,wxLevel=null;
+const DIRS=['N','NE','E','SE','S','SO','O','NO'];const dirTxt=d=>DIRS[Math.round(d/45)%8];
+async function loadWx(){
+ try{
+  const u='https://api.open-meteo.com/v1/forecast?latitude='+WX_LAT+'&longitude='+WX_LON+'&current=temperature_2m,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m&hourly=precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m&forecast_hours=12&wind_speed_unit=kmh&timezone=America%2FMartinique';
+  const r=await fetch(u);if(!r.ok)throw new Error(r.status);WX=await r.json();WX._t=Date.now();renderWx();
+ }catch(e){document.querySelectorAll('.wx .wxs').forEach(el=>{el.className='wxs';el.textContent='Météo indisponible (pas de réseau ?)';});}
+}
+function wxEval(){
+ const c=WX.current,h=WX.hourly,vm=S.cfg.ventMax,ph=S.cfg.pluieH;
+ const n=Math.min(ph,h.time.length);let rainSoon=0,probMax=0,firstRain=null;
+ for(let i=0;i<n;i++){rainSoon+=h.precipitation[i]||0;probMax=Math.max(probMax,h.precipitation_probability[i]||0);if(firstRain==null&&(h.precipitation[i]||0)>=0.2)firstRain=h.time[i].slice(11,16);}
+ let lvl='ok',txt='✅ Conditions correctes pour traiter';
+ if(c.wind_speed_10m>vm){lvl='e';txt='⛔ Vent '+Math.round(c.wind_speed_10m)+' km/h : au-dessus de '+vm+' km/h, ne pas traiter';}
+ else if((c.precipitation||0)>=0.2){lvl='e';txt='⛔ Il pleut : traitement lessivé';}
+ else if(rainSoon>=0.5||probMax>=60){lvl='w';txt='⚠ Pluie probable dans les '+ph+' h'+(firstRain?' (vers '+firstRain+')':'')+' : risque de lessivage';}
+ else if(c.wind_gusts_10m>vm*1.6){lvl='w';txt='⚠ Rafales à '+Math.round(c.wind_gusts_10m)+' km/h : surveiller la dérive';}
+ return {lvl,txt};
+}
+function renderWx(){
+ if(!WX||!WX.current)return;const c=WX.current,h=WX.hourly,ev=wxEval();
+ const hrs=h.time.slice(0,8).map((t,i)=>'<div>'+t.slice(11,13)+'h<b>'+Math.round(h.wind_speed_10m[i])+'</b>'+(h.precipitation[i]>=0.1?'💧'+(Math.round(h.precipitation[i]*10)/10):(h.precipitation_probability[i]||0)+'%')+'</div>').join('');
+ document.querySelectorAll('.wx').forEach(el=>{
+  el.querySelector('.wxt').textContent='mise à jour '+hm(WX._t);
+  const s=el.querySelector('.wxs');s.className='wxs '+ev.lvl;s.textContent=ev.txt;
+  el.querySelector('.wxg').innerHTML='<div><b>'+Math.round(c.wind_speed_10m)+'</b><span>vent km/h</span></div><div><b>'+Math.round(c.wind_gusts_10m)+'</b><span>rafales</span></div><div><b>'+dirTxt(c.wind_direction_10m)+'</b><span>direction</span></div><div><b>'+(Math.round((c.precipitation||0)*10)/10)+'</b><span>pluie mm</span></div><div style="grid-column:1/-1;padding:0;background:none"><div class="wxh2">'+hrs+'</div><span>prochaines heures : vent km/h et pluie</span></div>';
+ });
+ if(wxLevel!==null&&ev.lvl!==wxLevel&&ev.lvl!=='ok'&&S.cur&&!S.paused){say(ev.txt.replace(/[⛔⚠✅]/g,''));msg(ev.txt,ev.lvl==='e'?'e':'w');}
+ wxLevel=ev.lvl;
+}
+function openWindy(o){
+ $('winFrame').src='https://embed.windy.com/embed.html?type=map&location=coordinates&metricRain=mm&metricTemp=%C2%B0C&metricWind=km%2Fh&zoom=11&overlay='+o+'&product=ecmwf&level=surface&lat='+WX_LAT+'&lon='+WX_LON+'&detailLat='+WX_LAT+'&detailLon='+WX_LON+'&marker=true&message=true';
+ $('mWin').classList.remove('hide');
+}
+document.querySelectorAll('.wxw').forEach(b=>b.onclick=()=>openWindy(b.dataset.o));
+$('winClose').onclick=()=>{$('mWin').classList.add('hide');$('winFrame').src='about:blank';};
+loadWx();setInterval(loadWx,10*60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(!WX||Date.now()-WX._t>5*60000))loadWx();});
+
 setInterval(()=>{if(M2&&!$('vBur').classList.contains('hide'))renderBureau();},30000);
 
 /* démarrage */
