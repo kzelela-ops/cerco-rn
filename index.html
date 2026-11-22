@@ -54,6 +54,23 @@ td.n,th.n{text-align:right}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9}
 .modal .card{width:100%;max-width:520px;margin:0;border-radius:16px 16px 0 0;padding:18px}
 h2{font-size:17px;margin:0 0 8px}
+#poche{position:fixed;inset:0;background:#000;color:#9fd8b0;z-index:20;display:flex;flex-direction:column;justify-content:space-between;padding:22px 16px;text-align:center}
+#poche .pv{font-size:64px;font-weight:800;color:#e8ffe9;line-height:1}
+#poche .pl{font-size:15px;color:#6f9c7c;margin-top:4px}
+#poche .pr{font-size:18px;color:#cfe;margin:8px 0}
+#poche button{border:0;border-radius:14px;padding:20px;font-size:20px;font-weight:800;width:100%;margin-top:10px}
+#pCanon.on{background:#1b6b3c;color:#fff}#pCanon.off{background:#333;color:#bbb}
+#pExit{background:#111;color:#888;border:1px solid #333!important}
+.cons{width:100%;border-collapse:collapse;font-size:17px;margin:8px 0}
+.cons td{padding:8px 4px;border-bottom:1px solid #e5e8e1}.cons td.n{text-align:right;font-weight:800;font-size:20px}
+.chk{display:flex;gap:10px;align-items:center;font-size:17px;font-weight:700;padding:12px;background:#eef5ef;border-radius:10px;margin:8px 0}
+.chk input{width:28px;height:28px}
+.bon{border:2px solid #1f5f3a;border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.bon h3{margin:0 0 6px;font-size:16px;color:#1f5f3a}
+.bon table{font-size:14px}
+.ce{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:6px}
+.ce input,.ce select{font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb;width:100%}
+@media print{header,.tabs,#vChauf,.noprint,#mapc2,#bK,.msg{display:none!important}body{background:#fff}.card{box-shadow:none}.bon{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -76,13 +93,14 @@ h2{font-size:17px;margin:0 0 8px}
    <div class="sm" style="margin-top:6px" id="parcInfo">Parcelle : —</div>
   </div>
   <button class="btn off" id="spray">CANON ARRÊTÉ – toucher pour démarrer</button>
+  <div style="height:8px"></div><button class="btn sec" id="pocheBtn">🌙 Mode poche (le téléphone chauffe moins)</button>
   <div style="height:8px"></div>
  </div>
  <div id="mapc"><canvas id="map"></canvas><div class="mb"><button id="zIn">+</button><button id="zOut">−</button><button id="follow" class="on" title="Suivre le tracteur">◎</button></div></div>
  <div style="height:8px"></div>
  <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:8px">⏸ Pause (remplissage, déplacement)</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
- <div class="card"><h2>Aujourd'hui</h2><div id="dayTbl" class="sm">Aucune cuve.</div></div>
- <div class="card"><h2>Parcelles traitées aujourd'hui</h2><div id="parcTbl" class="sm">—</div></div>
+ <details class="card"><summary><b>Mes cuves et bons d'aujourd'hui</b></summary><div id="dayTbl" class="sm">Aucune cuve.</div><div id="myBons"></div></details>
+ <details class="card"><summary><b>Parcelles traitées aujourd'hui</b></summary><div id="parcTbl" class="sm">—</div></details>
 </section>
 
 <section id="vBur" class="hide">
@@ -90,7 +108,9 @@ h2{font-size:17px;margin:0 0 8px}
  <div class="big" id="bK"></div>
  <div style="height:8px"></div>
  <div id="mapc2"></div>
- <div class="card" style="margin-top:8px"><h2>Cuves</h2><div id="bCuves" class="sm">—</div></div>
+ <div class="card noprint" style="margin-top:8px"><h2>Consigne de préparation des cuves</h2><div class="sm">Dose par hectare de chaque produit. Le chauffeur voit les quantités à mettre selon le volume de sa cuve (bouillie à <span id="cDoseTxt">50</span> L/ha).</div><div style="height:8px"></div><div id="consEdit"></div><div class="row2"><button class="btn sec" id="consAdd" style="padding:10px">+ Produit</button><button class="btn" id="consSave" style="padding:10px">Envoyer aux chauffeurs</button></div><div class="sm" id="consInfo"></div></div>
+ <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Bons d'intervention</h2><button class="btn sec noprint" id="bPrint" style="width:auto;padding:8px 14px;font-size:15px">Imprimer</button></div><div id="bBons" class="sm">—</div></div>
+ <div class="card noprint" style="margin-top:8px"><h2>Cuves</h2><div id="bCuves" class="sm">—</div></div>
  <div class="card"><h2>Parcelles</h2><div id="bParc" class="sm">—</div></div>
 </section>
 
@@ -114,6 +134,8 @@ h2{font-size:17px;margin:0 0 8px}
  <div class="vols"><button data-v="400">400 L</button><button data-v="600">600 L</button><button data-v="800">800 L</button></div>
  <input type="number" id="volFree" placeholder="Autre volume (L)">
  <div class="sm" id="volObj" style="margin:10px 0;font-size:16px">&nbsp;</div>
+ <div id="prep"></div>
+ <label class="chk hide" id="prepChkL"><input type="checkbox" id="prepChk"> Cuve préparée selon la consigne</label>
  <div class="row2"><button class="btn sec" id="mCancel">Retour</button><button class="btn" id="mOk">Démarrer</button></div>
 </div></div>
 <div class="modal hide" id="mWho"><div class="card">
@@ -121,6 +143,8 @@ h2{font-size:17px;margin:0 0 8px}
  <div style="height:10px"></div><input type="text" id="whoIn" placeholder="Prénom" style="font-size:18px;padding:10px;border-radius:8px;border:1px solid #bbb;width:100%">
  <div style="height:10px"></div><button class="btn" id="whoOk">Valider</button>
 </div></div>
+<div class="modal hide" id="mBon"><div class="card"><h2>Bon d'intervention enregistré</h2><div id="bonTxt"></div><button class="btn" id="bonOk">OK</button></div></div>
+<div id="poche" class="hide"><div><div class="pl" id="pWho">—</div><div class="pr" id="pParc">—</div></div><div><div class="pv" id="pDone">0,0</div><div class="pl">ha faits sur cette cuve</div><div style="height:18px"></div><div class="pv" style="font-size:44px" id="pLeft">0,0</div><div class="pl" id="pLeftL">ha restants</div></div><div><button id="pCanon" class="off">CANON ARRÊTÉ</button><button id="pExit">Quitter le mode poche</button></div></div>
 <div class="modal hide" id="mEnd"><div class="card">
  <h2>Fin de cuve</h2><div id="endTxt" style="font-size:16px;margin-bottom:12px"></div>
  <div class="row2"><button class="btn sec" id="eBack">Retour</button><button class="btn red" id="eOk">Confirmer cuve vide</button></div>
@@ -152,8 +176,10 @@ const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85};const SW=c=>c.larg*(c.s
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
 S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;}
+function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;S.bons=[];}
 if(S.day!==dayOf(Date.now()))newDay();
+if(!S.bons)S.bons=[];if(!S.consigne)S.consigne={produits:[],maj:0};
+let POCHE=false;
 let saveT=null;
 function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},300)}
 
@@ -309,6 +335,7 @@ function renderChauf(){
  $('dayTbl').innerHTML=rows.length?'<table><tr><th>Cuve</th><th>Heure</th><th class="n">Obj.</th><th class="n">Fait</th><th class="n">Écart</th></tr>'+rows.map(k=>{const r=cuveStats(k),e=k.obj?(r.ha-k.obj)/k.obj:0;const cl=!k.end?'':Math.abs(e)<=.1?'ok':Math.abs(e)<=.2?'wa':'ko';
   return '<tr><td>'+k.n+' · '+k.vol+' L</td><td>'+hm(k.start)+(k.end?'–'+hm(k.end):' (en cours)')+'</td><td class="n">'+f1(k.obj)+'</td><td class="n">'+f1(r.ha)+'</td><td class="n '+cl+'">'+(k.end?(e>0?'+':'')+Math.round(e*100)+' %':'')+'</td></tr>'}).join('')+'</table>':'Aucune cuve.';
  renderParcTbl($('parcTbl'),built.cov);
+ $('myBons').innerHTML=(S.bons||[]).slice().reverse().map(bonHtml).join('');
  save();
 }
 function renderParcTbl(el,cov){
@@ -320,7 +347,7 @@ function addPoint(lat,lon,acc,t){
  const[x,y]=toXY(lat,lon);lastPos=[x,y];
  M1.pos=[x,y,acc];
  $('gpsDot').className='dot '+(acc<=S.cfg.acc?'on':'off');$('gpsTxt').textContent='GPS ± '+Math.round(acc)+' m';
- if(!S.cur||S.paused){renderChauf();M1.draw();liveState();return;}
+ if(!S.cur||S.paused){lightRender();liveState();return;}
  const p=[t,Math.round(x*10)/10,Math.round(y*10)/10,S.on&&S.cur?1:0,Math.round(acc)];
  if(S.brk)p[5]=1;
  const last=S.brk?null:S.pts[S.pts.length-1];
@@ -330,7 +357,7 @@ function addPoint(lat,lon,acc,t){
   S.pts.push(p);S.brk=false;
  }
  checkAlerts();
- renderChauf();M1.draw();
+ lightRender();
  liveSend(p);
 }
 function checkAlerts(){
@@ -346,6 +373,14 @@ function checkAlerts(){
    if(pc<S.cfg.seuil&&pc>30){const t=NAMES[k-1]+' quittée, couverte à '+Math.round(pc)+' pour cent. Il reste des traces.';say(t);msg(t,'w');}}}
 }
 let pendExit=null;
+/* rendu économe : en mode poche seulement l'écran noir ; sinon au plus toutes les 3 s */
+let lrT=0;
+function lightRender(){const now=Date.now();if(POCHE){renderPoche();return;}if(document.visibilityState!=='visible')return;if(now-lrT<3000)return;lrT=now;renderChauf();M1.draw();}
+function renderPoche(){const c=cur();$('pWho').textContent=(S.who||'')+(c?' · cuve '+c.n+' · '+c.vol+' L':'');
+ if(lastPos){const i=parcAt(lastPos[0],lastPos[1]);$('pParc').textContent=i?NAMES[i-1]:'Hors parcelle';}
+ if(c){const r=cuveStats(c),left=c.obj-r.ha;$('pDone').textContent=f1(r.ha);$('pLeft').textContent=f1(Math.abs(left));$('pLeftL').textContent=left>=0?'ha restants pour vider la cuve':'ha AU-DELÀ de l\'objectif';}
+ const b=$('pCanon');b.className=S.on?'on':'off';b.textContent=S.on?'CANON EN MARCHE (toucher pour arrêter)':'CANON ARRÊTÉ (toucher pour démarrer)';}
+function setPoche(v){POCHE=v;$('poche').classList.toggle('hide',!v);if(v){renderPoche();say('Mode poche. Touchez Quitter pour revenir à la carte.');}else{lrT=0;renderChauf();M1.draw();}}
 /* envoi bureau */
 let liveT=0,ptsT=0;
 function etat(){return S.cur?(S.paused?'pause':'cuve'):'attente';}
@@ -354,9 +389,9 @@ function liveState(force){if(!FB.ok)return;const e=etat();if(!force&&e===lastEta
  fbSet('live/'+WID(),{who:S.who||'',t:Date.now(),etat:e,on:0,day:S.day,cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:cuveStats(c).ha,start:c.start}:null});}
 function liveSend(p){
  if(!FB.ok)return;const now=Date.now();
- if(now-liveT>5000){liveT=now;const c=cur();const r=c?cuveStats(c):null;
+ if(now-liveT>(POCHE?30000:10000)){liveT=now;const c=cur();const r=c?cuveStats(c):null;
   lastEtat=etat();fbSet('live/'+WID(),{who:S.who||'',etat:etat(),t:p[0],x:p[1],y:p[2],acc:p[4],on:p[3],day:S.day,parc:lastPos?(NAMES[parcAt(lastPos[0],lastPos[1])-1]||''):'',cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:r.ha,start:c.start}:null});}
- if(now-ptsT>20000)flushPts();
+ if(now-ptsT>60000)flushPts();
 }
 function flushPts(){
  if(!FB.ok)return;ptsT=Date.now();const n=S.pts.length;if((S.sent||0)>=n)return;
@@ -364,27 +399,32 @@ function flushPts(){
  fbSet('jours/'+S.day+'/pts/'+id,{who:S.who||'',p:JSON.stringify(chunk),n:chunk.length});S.sent=n;save();
 }
 function sendCuve(c){const r=cuveStats(c);fbSet('jours/'+S.day+'/cuves/'+WID()+'_'+c.id,{who:S.who||'',n:c.n,vol:c.vol,obj:c.obj,start:c.start,end:c.end||null,ha:r.ha,dose:S.cfg.dose,larg:S.cfg.larg,side:S.cfg.side});fbSet('jours/'+S.day,{maj:Date.now()});}
-fbHooks.push(()=>{S.cuves.forEach(sendCuve);if(S.cur)sendCuve(S.cur);flushPts();});
+fbHooks.push(()=>{S.cuves.forEach(sendCuve);if(S.cur)sendCuve(S.cur);flushPts();(S.bons||[]).forEach(b=>fbSet('jours/'+b.day+'/bons/'+WID()+'_'+b.day+'_'+b.n+'_'+b.start,b));
+ try{FB.m.onSnapshot(FB.m.doc(FB.db,'config','consigne'),d=>{const x=d.data();if(x&&x.produits){S.consigne=x;save();if(!$('mCuve').classList.contains('hide'))showObj();renderCons();}});}catch(e){}});
 
 /* GPS */
 function startGPS(){
  if(!navigator.geolocation){$('gpsTxt').textContent='GPS indisponible';return;}
  navigator.geolocation.watchPosition(pos=>{const c=pos.coords;addPoint(c.latitude,c.longitude,c.accuracy,pos.timestamp||Date.now());},
   err=>{$('gpsDot').className='dot off';$('gpsTxt').textContent=err.code===1?'GPS refusé':'GPS : pas de signal';if(err.code===1)msg('Autorise la localisation pour ce site dans Chrome (cadenas à gauche de l\'adresse).','e');},
-  {enableHighAccuracy:true,maximumAge:0,timeout:20000});
+  {enableHighAccuracy:true,maximumAge:1000,timeout:20000});
 }
 async function keepAwake(){try{if('wakeLock' in navigator){wake=await navigator.wakeLock.request('screen');}}catch(e){}}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){keepAwake();if(S.day!==dayOf(Date.now())&&!S.cur){newDay();built=build(S.pts,S.cfg);M1.setCov(built.cov);M1.pts=S.pts;renderChauf();}}});
 
 /* boutons chauffeur */
 let selVol=null;
-function showObj(){const v=selVol||parseFloat($('volFree').value);$('volObj').innerHTML=v>0?'Objectif : <b>'+f1(v/S.cfg.dose)+' ha</b> à '+S.cfg.dose+' L/ha, soit environ <b>'+f1(v/S.cfg.dose*1e4/SW(S.cfg)/1000)+' km</b> de trace':'&nbsp;';}
+function prepOf(v){const ha=v/S.cfg.dose;const L=(S.consigne.produits||[]).filter(x=>x.nom&&x.dose>0).map(x=>({nom:x.nom,u:x.u||'L',q:Math.round(x.dose*ha*100)/100}));const liq=L.filter(x=>x.u==='L').reduce((a,x)=>a+x.q,0);return {ha,L,eau:Math.max(0,Math.round(v-liq))};}
+function showObj(){const v=selVol||parseFloat($('volFree').value);$('volObj').innerHTML=v>0?'Objectif : <b>'+f1(v/S.cfg.dose)+' ha</b> à '+S.cfg.dose+' L/ha, soit environ <b>'+f1(v/S.cfg.dose*1e4/SW(S.cfg)/1000)+' km</b> de trace':'&nbsp;';
+ const P=v>0?prepOf(v):null;const has=P&&P.L.length;
+ $('prep').innerHTML=has?'<h2 style="margin-top:6px">À mettre dans la cuve</h2><table class="cons">'+P.L.map(x=>'<tr><td>'+x.nom+'</td><td class="n">'+x.q.toLocaleString('fr-FR')+' '+x.u+'</td></tr>').join('')+'<tr><td>Eau (compléter jusqu\'à '+v+' L)</td><td class="n">'+f0(P.eau)+' L</td></tr></table>'+(S.consigne.note?'<div class="sm">'+S.consigne.note+'</div>':''):(v>0?'<div class="msg w show">Pas de consigne du bureau : demander les quantités avant de remplir.</div>':'');
+ $('prepChkL').classList.toggle('hide',!has);$('prepChk').checked=false;}
 $('newCuve').onclick=()=>{if(!S.who){askWho();return;}selVol=null;$('volFree').value='';document.querySelectorAll('.vols button').forEach(b=>b.classList.remove('sel'));showObj();$('mCuve').classList.remove('hide');};
 document.querySelectorAll('.vols button').forEach(b=>b.onclick=()=>{selVol=+b.dataset.v;$('volFree').value='';document.querySelectorAll('.vols button').forEach(x=>x.classList.toggle('sel',x===b));showObj();});
 $('volFree').oninput=()=>{selVol=null;document.querySelectorAll('.vols button').forEach(x=>x.classList.remove('sel'));showObj();};
 $('mCancel').onclick=()=>$('mCuve').classList.add('hide');
-$('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(!(v>0))return;
- const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now};S.on=false;S.paused=false;S.brk=true;
+$('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(!(v>0))return;const P=prepOf(v);if(P.L.length&&!$('prepChk').checked){msg('Coche « Cuve préparée selon la consigne » avant de démarrer.','w');say('Cochez cuve préparée avant de démarrer.');return;}
+ const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now,prep:P.L,eau:P.eau};S.on=false;S.paused=false;S.brk=true;
  $('mCuve').classList.add('hide');say('Cuve '+n+' : '+v+' litres, objectif '+f1(v/S.cfg.dose)+' hectares.');keepAwake();sendCuve(S.cur);renderChauf();};
 $('spray').onclick=()=>{if(S.paused)return;S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();};
 $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
@@ -395,7 +435,24 @@ $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
  $('endTxt').innerHTML=t;$('mEnd').classList.remove('hide');};
 $('eBack').onclick=()=>$('mEnd').classList.add('hide');
 $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
- liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent.');sendCuve(c);flushPts();renderChauf();};
+ liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Bon d\'intervention enregistré.');sendCuve(c);flushPts();
+ const bon=makeBon(c);S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
+function makeBon(c){const per={};let prev=null;
+ for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
+  if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=i?NAMES[i-1]:'Hors parcelle';per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
+ const parc=Object.entries(per).filter(x=>x[1]>=0.05).sort((a,b)=>b[1]-a[1]).map(([n,ha])=>({n,ha:Math.round(ha*100)/100}));
+ return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0};}
+function bonHtml(b){const du=Math.round((b.end-b.start)/60000);
+ return '<div class="bon"><h3>Bon d\'intervention · Traitement Cerco</h3><table>'+
+ '<tr><td>Date</td><td><b>'+b.day.split('-').reverse().join('/')+'</b></td></tr><tr><td>Chauffeur</td><td><b>'+(b.who||'—')+'</b></td></tr>'+
+ '<tr><td>Horaires</td><td><b>'+hm(b.start)+' – '+hm(b.end)+'</b> ('+Math.floor(du/60)+' h '+pad(du%60)+')</td></tr>'+
+ '<tr><td>Cuve</td><td>n° '+b.n+' · '+b.vol+' L · '+b.dose+' L/ha</td></tr>'+
+ '<tr><td>Produits</td><td>'+(b.prep.length?b.prep.map(x=>x.nom+' '+x.q.toLocaleString('fr-FR')+' '+x.u).join(' · ')+(b.eau!=null?' · eau '+f0(b.eau)+' L':''):'—')+'</td></tr>'+
+ '<tr><td>Surface</td><td><b>'+f1(b.ha)+' ha</b> pour '+f1(b.obj)+' ha prévus ('+(b.ecart>0?'+':'')+b.ecart+' %)</td></tr></table>'+
+ '<table style="margin-top:6px"><tr><th>Parcelle</th><th class="n">ha traités</th></tr>'+(b.parc.length?b.parc.map(x=>'<tr><td>'+x.n+'</td><td class="n">'+f1(x.ha)+'</td></tr>').join(''):'<tr><td colspan="2">Aucune trace canon en marche</td></tr>')+'</table></div>';}
+$('bonOk').onclick=()=>$('mBon').classList.add('hide');
+$('pocheBtn').onclick=()=>setPoche(true);$('pExit').onclick=()=>setPoche(false);
+$('pCanon').onclick=()=>{$('spray').onclick();renderPoche();};
 $('pauseBtn').onclick=()=>{S.paused=!S.paused;if(S.paused){S.on=false;S.brk=true;say('Pause. Le tracé est arrêté.');}else{S.brk=true;say('Reprise du traitement. Pense à démarrer le canon.');}renderChauf();M1.draw();liveState(true);};
 $('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){S.cur=null;S.on=false;S.paused=false;S.brk=true;liveState(true);delete b.dataset.c;b.textContent='Annuler la cuve';renderChauf();}else{b.dataset.c=1;b.textContent='Confirmer l\'annulation';setTimeout(()=>{delete b.dataset.c;b.textContent='Annuler la cuve'},4000);}};
 $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M1.setFollow(false);M1.zoom(1/1.4)};$('follow').onclick=()=>{M1.setFollow(!M1.follow);if(!M1.follow){M1.fit();}M1.draw();};
@@ -411,7 +468,17 @@ showWho();
 $('cTest').onclick=()=>say('Test de la voix. Cuve de 600 litres, objectif 12 hectares.');
 
 /* ======================= MODE BUREAU ======================= */
-let M2=null,bUnsub=[],bDay=dayOf(Date.now()),bPts={},bCuves={},bLive={};
+let M2=null,bUnsub=[],bDay=dayOf(Date.now()),bPts={},bCuves={},bLive={},bBons={};
+function renderBons(){const L=Object.values(bBons).sort((a,b)=>a.start-b.start);$('bBons').innerHTML=L.length?L.map(bonHtml).join(''):'Aucun bon pour cette journée.';}
+let consDraft=null;
+function renderCons(){if(!$('consEdit'))return;$('cDoseTxt').textContent=S.cfg.dose;if(!consDraft)consDraft=JSON.parse(JSON.stringify(S.consigne.produits||[]));
+ $('consEdit').innerHTML=consDraft.map((x,i)=>'<div class="ce"><input data-i="'+i+'" data-k="nom" value="'+(x.nom||'').replace(/"/g,'')+'" placeholder="Produit"><input data-i="'+i+'" data-k="dose" type="number" step="any" value="'+(x.dose||'')+'" placeholder="Dose/ha"><select data-i="'+i+'" data-k="u"><option'+(x.u==='kg'?'':' selected')+'>L</option><option'+(x.u==='kg'?' selected':'')+'>kg</option></select><button class="btn sec" data-del="'+i+'" style="padding:8px">✕</button></div>').join('')+'<input id="consNote" placeholder="Remarque pour les chauffeurs (facultatif)" value="'+(S.consigne.note||'').replace(/"/g,'')+'" style="font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb;width:100%;margin-bottom:8px">';
+ $('consEdit').querySelectorAll('[data-k]').forEach(e=>e.onchange=()=>{const i=+e.dataset.i,k=e.dataset.k;consDraft[i][k]=k==='dose'?parseFloat(e.value)||0:e.value;});
+ $('consEdit').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{consDraft.splice(+b.dataset.del,1);renderCons();});
+ $('consInfo').textContent=S.consigne.maj?'Dernière consigne envoyée le '+new Date(S.consigne.maj).toLocaleString('fr-FR'):'';}
+$('consAdd').onclick=()=>{if(!consDraft)consDraft=[];consDraft.push({nom:'',dose:0,u:'L'});renderCons();};
+$('consSave').onclick=()=>{const c={produits:consDraft.filter(x=>x.nom&&x.dose>0),note:($('consNote')||{}).value||'',maj:Date.now()};S.consigne=c;save();fbSet('config/consigne',c);consDraft=null;renderCons();msg(FB.ok?'Consigne envoyée aux chauffeurs.':'Bureau non relié : consigne gardée sur ce téléphone seulement.',FB.ok?'i':'w');};
+$('bPrint').onclick=()=>window.print();
 const COLS=['#0b3d20','#1e5bd8','#c0392b','#8e44ad','#d35400','#16a085'];
 function showTab(t){$('tChauf').classList.toggle('on',t==='c');$('tBur').classList.toggle('on',t==='b');$('vChauf').classList.toggle('hide',t!=='c');$('vBur').classList.toggle('hide',t!=='b');
  try{localStorage.setItem('cerco_tab',t)}catch(e){}
@@ -423,7 +490,8 @@ function startBureau(){
   M2=new MapView($('map2'));M2.followBtn=$('f2');M2.setFollow(false);M2.larg=S.cfg.larg;
   $('z2In').onclick=()=>M2.zoom(1.4);$('z2Out').onclick=()=>M2.zoom(1/1.4);$('f2').onclick=()=>{M2.setFollow(!M2.follow);if(!M2.follow)M2.fit();M2.draw();};
   $('bDay').value=bDay;$('bDay').onchange=()=>{bDay=$('bDay').value;subBureau();};$('bToday').onclick=()=>{bDay=dayOf(Date.now());$('bDay').value=bDay;subBureau();};}
- if(!FB.ok){$('bLive').textContent='Suivi bureau non relié : affichage des données de ce téléphone seulement.';bPts={local:{who:S.who||'Ce téléphone',p:S.pts}};bCuves={};S.cuves.concat(S.cur?[S.cur]:[]).forEach(c=>bCuves[c.id]=Object.assign({},c,{ha:cuveStats(c).ha,who:S.who||''}));renderBureau();return;}
+ renderCons();
+ if(!FB.ok){$('bLive').textContent='Suivi bureau non relié : affichage des données de ce téléphone seulement.';bBons={};(S.bons||[]).forEach((b,i)=>bBons[i]=b);renderBons();bPts={local:{who:S.who||'Ce téléphone',p:S.pts}};bCuves={};S.cuves.concat(S.cur?[S.cur]:[]).forEach(c=>bCuves[c.id]=Object.assign({},c,{ha:cuveStats(c).ha,who:S.who||''}));renderBureau();return;}
  subBureau();
 }
 function subBureau(){
@@ -433,6 +501,7 @@ function subBureau(){
  bUnsub.push(m.onSnapshot(m.collection(db,'jours',bDay,'pts'),q=>{q.docChanges().forEach(ch=>{if(ch.type!=='removed'){try{bPts[ch.doc.id]={who:ch.doc.data().who||'?',p:JSON.parse(ch.doc.data().p)}}catch(e){}}});renderBureau();}));
  bUnsub.push(m.onSnapshot(m.collection(db,'jours',bDay,'cuves'),q=>{q.forEach(d=>bCuves[d.id]=d.data());renderBureau();}));
  bUnsub.push(m.onSnapshot(m.collection(db,'live'),q=>{bLive={};q.forEach(d=>{const x=d.data();if(x&&x.x!=null)bLive[d.id]=x;});renderBureau();}));
+ bBons={};bUnsub.push(m.onSnapshot(m.collection(db,'jours',bDay,'bons'),q=>{bBons={};q.forEach(d=>bBons[d.id]=d.data());renderBons();}));
 }
 function renderBureau(){
  if(!M2)return;
