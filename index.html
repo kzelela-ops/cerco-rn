@@ -84,7 +84,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
 .bon .bh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:2px solid var(--g);padding-bottom:8px;margin-bottom:8px}
 .bon h3{margin:0;font-size:15px;color:var(--g)}
 .bco{font-size:11px;color:var(--mut);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px}
-.sig{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.sig div{border:1px dashed #cfd5cd;border-radius:8px;height:60px;padding:6px 8px;font-size:11px;color:var(--mut)}
+.sig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px}.sig div{border:1px dashed #cfd5cd;border-radius:8px;height:60px;padding:6px 8px;font-size:11px;color:var(--mut)}
 .bon .bno{font-size:12px;color:var(--mut);text-align:right}
 .bon .kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:14px;margin-bottom:8px}
 .bon .kv span{color:var(--mut)}
@@ -274,7 +274,7 @@ function build(pts,cfg,cov0){
 function sprayedHa(pts,cfg,t0,t1){
  let prev=null,d=0;
  for(const p of pts){if(p[0]<t0||(t1&&p[0]>t1))continue;if(p[4]>cfg.acc)continue;
-  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3])d+=dd;}
+  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3]&&parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2))d+=dd;}
   prev=p;}
  return {m:d,ha:d*SW(cfg)/1e4};
 }
@@ -516,20 +516,22 @@ $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.ma
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
   if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=i?NAMES[i-1]:'Hors parcelle';per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
- const parc=Object.entries(per).filter(x=>x[1]>=0.05).sort((a,b)=>b[1]-a[1]).map(([n,ha])=>({n,ha:Math.round(ha*100)/100}));
+ const parc=Object.entries(per).filter(x=>x[1]>=0.05&&x[0]!=='Hors parcelle').sort((a,b)=>b[1]-a[1]).map(([n,ha])=>({n,ha:Math.round(ha*100)/100}));
  return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,client:c.client||'',donneur:c.donneur||'',note:c.note||'',parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0};}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 function printBon(b,ST){const w=window.open('','_blank');if(!w){msg('Autorise l\'ouverture de fenêtres pour imprimer le bon.','w');return;}const css=document.querySelector('style').textContent;w.document.write('<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Bon d\'intervention '+bonNo(b)+'</title><style>'+css+'body{background:#fff;padding:18px;user-select:text}.bon{max-width:720px;margin:0 auto}.noprint{display:none!important}@page{size:A4;margin:14mm}</style></head><body>'+bonHtml(b,ST)+'<scr'+'ipt>setTimeout(function(){print()},500)</scr'+'ipt></body></html>');w.document.close();}
+const SURF={"Adinette":2.78,"Aubergine":1.55,"Belle Case":2.69,"Canal":2.65,"Dachine":1.28,"Domergue 01":1.36,"Domergue 02":1.39,"Domergue 03":1.44,"Domergue 04":1.55,"Domergue 05":0.95,"Fond la Pointe":1.21,"Fruit à Pain":1.69,"Grand Boudou":1.31,"Grand Chemin":2.63,"Grosse Roche":1.29,"Hangar":1.56,"La Pointe E":1.46,"La Vierge":1.5,"Lisière":2.14,"Marie Jo":1.58,"Oranger":1.75,"Petit Boudou 1 (1A + 1B)":1.34,"Petit Boudou 2":1.99,"Pomerose":2,"Rivière Noire 03":1.2,"Rivière Noire 04A":1.26,"Rivière Noire 04B":1.68,"Rivière Noire 05":1.65,"Rivière Noire 0678":2,"Rivière Noire 09":1.69,"Rivière Noire 10":2.62,"Rivière Noire 11":2.19,"Rivière Noire 12":2.09,"Rivière Noire 13":1.26,"Rivière Noire 14":1.17,"Rivière Noire 15":0.29,"Rivière Noire 16":1.34,"Rivière Noire 17":0.61,"Savane EDEN":2.25,"Tomate":2.42,"Zamana":1.81};
+function surfOf(n){if(SURF[n]!=null)return f1(SURF[n])+' ha';const i=NAMES.indexOf(n)+1;return i?f1(parcHa(i))+' ha':'—';}
 function bonNo(b){return b.day.replace(/-/g,'').slice(2)+'-'+String(b.who||'X').slice(0,3).toUpperCase()+'-'+b.n;}
 function stTag(st){if(!st)return '';return st.fini?'<span class="tag ok">Finie</span>':'<span class="tag wa">À terminer · '+st.pc+' %</span>';}
-function bonHtml(b,ST){const du=Math.round((b.end-b.start)/60000);const loc=!ST;
+function bonHtml(b,ST){const du=Math.round((b.end-b.start)/60000);const loc=!ST;const PP=(b.parc||[]).filter(x=>x.n!=='Hors parcelle');const haP=Math.round(PP.reduce((a,x)=>a+x.ha,0)*100)/100;const EC=b.obj?Math.round((haP-b.obj)/b.obj*100):0;
  const stOf=n=>ST?ST[n]:(b.st&&b.st[n]?b.st[n]:null);
  return '<div class="bon"><div class="bco">SAS Rivière Noire · Ajoupa-Bouillon, Martinique</div><div class="bh"><h3>Bon d\'intervention<br><span style="font-weight:500;color:var(--ink)">Traitement Cerco</span></h3><div class="bno">N° '+bonNo(b)+'<br>'+b.day.split('-').reverse().join('/')+'</div></div>'+
  '<div class="kv"><span>Donneur d\'ordre</span><div><b>'+(esc(b.client||b.donneur)||'—')+'</b></div><span>Chauffeur</span><b>'+(b.who||'—')+'</b><span>Horaires</span><div><b>'+hm(b.start)+' – '+hm(b.end)+'</b> · '+Math.floor(du/60)+' h '+pad(du%60)+'</div>'+
  '<span>Cuve</span><div>n° '+b.n+' · '+b.vol+' L · '+b.dose+' L/ha</div>'+
  '<span>Produits</span><div>'+(b.prep&&b.prep.length?b.prep.map(x=>x.nom+' '+x.q.toLocaleString('fr-FR')+' '+x.u).join(' · ')+(b.eau!=null?' · eau '+f0(b.eau)+' L':''):'—')+'</div>'+
- (b.note?'<span>Consigne</span><div>'+esc(b.note)+'</div>':'')+'<span>Surface</span><div><b>'+f1(b.ha)+' ha</b> / '+f1(b.obj)+' ha prévus · <span class="'+(Math.abs(b.ecart)<=10?'ok':'ko')+'">'+(b.ecart>0?'+':'')+b.ecart+' %</span></div></div>'+
- '<table><tr><th>Parcelle traitée</th><th class="n">ha (cuve)</th><th class="n">Statut'+(loc?' (aujourd\'hui)':'')+'</th></tr>'+(b.parc.length?b.parc.map(x=>'<tr><td>'+x.n+'</td><td class="n">'+f1(x.ha)+'</td><td class="n">'+(x.n==='Hors parcelle'?'':stTag(stOf(x.n)))+'</td></tr>').join(''):'<tr><td colspan="3">Aucune trace canon en marche</td></tr>')+'</table><div class="sig"><div>Visa chauffeur</div><div>Visa donneur d\'ordre</div></div>'+(ST?'<button class="btn sec noprint pb1" style="margin-top:10px;padding:10px;font-size:14px">Imprimer ce bon / PDF pour le client</button>':'')+'</div>';}
+ (b.note?'<span>Consigne</span><div>'+esc(b.note)+'</div>':'')+'<span>Surface traitée</span><div><b>'+f1(haP)+' ha</b> / '+f1(b.obj)+' ha prévus · <span class="'+(Math.abs(EC)<=10?'ok':'ko')+'">'+(EC>0?'+':'')+EC+' %</span></div></div>'+
+ '<table><tr><th>Parcelle traitée</th><th class="n">Surface parcelle</th><th class="n">ha traités</th><th class="n">Statut'+(loc?' (aujourd\'hui)':'')+'</th></tr>'+(PP.length?PP.map(x=>'<tr><td>'+x.n+'</td><td class="n">'+surfOf(x.n)+'</td><td class="n">'+f1(x.ha)+'</td><td class="n">'+stTag(stOf(x.n))+'</td></tr>').join(''):'<tr><td colspan="4">Aucune parcelle traitée canon en marche</td></tr>')+'</table><div class="sm" style="margin-top:6px">Manœuvres hors parcelle non comptées.</div><div class="sig"><div>Visa chauffeur</div><div>Visa DESA</div><div>Visa donneur d\'ordre</div></div>'+(ST?'<button class="btn sec noprint pb1" style="margin-top:10px;padding:10px;font-size:14px">Imprimer ce bon / PDF pour le client</button>':'')+'</div>';}
 function bonHtmlOld(b){const du=Math.round((b.end-b.start)/60000);
  return '<div class="bon"><h3>Bon d\'intervention · Traitement Cerco</h3><table>'+
  '<tr><td>Date</td><td><b>'+b.day.split('-').reverse().join('/')+'</b></td></tr><tr><td>Chauffeur</td><td><b>'+(b.who||'—')+'</b></td></tr>'+
