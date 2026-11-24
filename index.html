@@ -3,127 +3,147 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<meta name="theme-color" content="#1f5f3a">
+<meta name="theme-color" content="#14402a">
 <title>Traitement Cerco – Rivière Noire</title>
 <style>
-:root{--g:#2e8b57;--r:#d9534f;--o:#e69500;--ink:#1d261f;--mut:#5f685f;--bg:#f3f5f0;--card:#fff}
+:root{--g:#1f6b45;--g2:#e8f2ec;--r:#c4413c;--r2:#fbeceb;--o:#b7791f;--o2:#fdf5e6;--ink:#1b1f1c;--mut:#6b736d;--line:#e3e6e1;--bg:#f5f6f4;--card:#fff}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-user-select:none;user-select:none}
-header{background:#1f5f3a;color:#fff;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
-header h1{font-size:17px;margin:0}
-header .st{font-size:12px;opacity:.9;text-align:right}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;background:#aaa;vertical-align:middle}
-.dot.on{background:#7CFC9A}.dot.off{background:#ff8a80}
-main{padding:10px;max-width:900px;margin:0 auto}
-.card{background:var(--card);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.big{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.k{background:var(--card);border-radius:12px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
-.k .v{font-size:26px;font-weight:700}.k .l{font-size:12px;color:var(--mut)}
+body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);-webkit-user-select:none;user-select:none;font-size:15px;line-height:1.35}
+header{background:#14402a;color:#fff;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:0;z-index:5}
+header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+header h1 small{display:block;font-size:11px;font-weight:500;opacity:.7;letter-spacing:.4px;text-transform:uppercase}
+header .st{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+header .st>div{font-size:11px;background:rgba(255,255,255,.12);border-radius:20px;padding:3px 9px;white-space:nowrap}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:#9aa;vertical-align:middle}
+.dot.on{background:#5fd48a}.dot.off{background:#ff8a80}
+main{padding:12px;max-width:920px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+details.card>summary{cursor:pointer;font-weight:600;list-style:none}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:'▾';float:right;color:var(--mut)}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.k .v{font-size:30px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}.k .l{font-size:12px;color:var(--mut);margin-top:2px}
 .k.g .v{color:var(--g)}.k.r .v{color:var(--r)}.k.o .v{color:var(--o)}
-.bar{height:14px;background:#e3e7df;border-radius:7px;overflow:hidden;margin-top:8px;position:relative}
+.bar{height:8px;background:#edf0eb;border-radius:4px;overflow:hidden;margin-top:10px}
 .bar i{display:block;height:100%;background:var(--g);transition:width .5s}
 .bar i.warn{background:var(--o)}.bar i.bad{background:var(--r)}
-#mapc{position:relative;background:#dfe6d8;border-radius:12px;overflow:hidden;height:52vh;min-height:300px;touch-action:none}
+#mapc{position:relative;background:#e9ede6;border:1px solid var(--line);border-radius:14px;overflow:hidden;height:52vh;min-height:300px;touch-action:none}
 #map{width:100%;height:100%;display:block}
-.mb{position:absolute;right:8px;display:flex;flex-direction:column;gap:6px;top:8px}
-.mb button{width:44px;height:44px;border-radius:10px;border:0;background:#fffe;font-size:22px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.mb button.on{background:#1f5f3a;color:#fff}
-.btn{border:0;border-radius:12px;padding:16px 12px;font-size:18px;font-weight:700;width:100%;color:#fff;background:#1f5f3a}
-.btn.sec{background:#fff;color:#1f5f3a;border:2px solid #1f5f3a}
-.btn.red{background:var(--r)}.btn.org{background:var(--o)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
-#spray{font-size:22px;padding:22px}
-#spray.on{background:var(--g);animation:pl 1.6s infinite}
-#spray.off{background:#6c757d}
-@keyframes pl{50%{filter:brightness(1.15)}}
-.msg{padding:10px 12px;border-radius:10px;margin-bottom:10px;font-weight:600;display:none}
-.msg.show{display:block}.msg.w{background:#fff3cd;color:#7a5600}.msg.e{background:#f8d7da;color:#842029}.msg.i{background:#d1e7dd;color:#0f5132}
-.vols{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.vols button{padding:18px 0;font-size:20px;font-weight:700;border-radius:10px;border:2px solid #1f5f3a;background:#fff;color:#1f5f3a}
-.vols button.sel{background:#1f5f3a;color:#fff}
-input[type=number],input[type=date]{font-size:18px;padding:10px;border-radius:8px;border:1px solid #bbb;width:100%}
+.mb{position:absolute;right:10px;display:flex;flex-direction:column;gap:6px;top:10px}
+.mb button{width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:20px;color:var(--ink)}
+.mb button.on{background:var(--g);color:#fff;border-color:var(--g)}
+.btn{border:0;border-radius:12px;padding:15px 12px;font-size:16px;font-weight:600;width:100%;color:#fff;background:var(--g);font-family:inherit;cursor:pointer}
+.btn.sec{background:#fff;color:var(--ink);border:1px solid #cfd5cd}
+.btn.red{background:var(--r)}.btn.org{background:#fff;color:var(--o);border:1px solid #e6c88f}
+.btn:active{filter:brightness(.95)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+#spray{font-size:18px;padding:20px;margin-top:2px}
+#spray.on{background:var(--g)}
+#spray.off{background:#4b524d}
+.msg{padding:11px 14px;border-radius:12px;margin-bottom:12px;font-weight:600;display:none;border:1px solid transparent}
+.msg.show{display:block}.msg.w{background:var(--o2);color:#7a5200;border-color:#f0dcb4}.msg.e{background:var(--r2);color:#8a2420;border-color:#f2c9c6}.msg.i{background:var(--g2);color:#14532d;border-color:#cfe3d6}
+.vols{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.vols button{padding:16px 0;font-size:18px;font-weight:600;border-radius:12px;border:1px solid #cfd5cd;background:#fff;color:var(--ink);font-family:inherit}
+.vols button.sel{background:var(--g);color:#fff;border-color:var(--g)}
+input[type=number],input[type=date],input[type=text],input[type=password],select{font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid #cfd5cd;width:100%;font-family:inherit;background:#fff;color:var(--ink)}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:6px 4px;border-bottom:1px solid #e5e8e1;text-align:left}
-td.n,th.n{text-align:right}
-.ok{color:var(--g);font-weight:700}.ko{color:var(--r);font-weight:700}.wa{color:var(--o);font-weight:700}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--mut);font-weight:600}
+th,td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:var(--g);font-weight:600}.ko{color:var(--r);font-weight:600}.wa{color:var(--o);font-weight:600}
+.tag{display:inline-block;font-size:12px;font-weight:600;border-radius:20px;padding:2px 9px}
+.tag.ok{background:var(--g2)}.tag.ko{background:var(--r2)}.tag.wa{background:var(--o2)}
 .hide{display:none!important}
-.tabs{display:flex;gap:6px;margin-bottom:10px}
-.tabs button{flex:1;padding:12px;border-radius:10px;border:0;background:#dde3d7;font-weight:700;font-size:15px}
-.tabs button.on{background:#1f5f3a;color:#fff}
+.tabs{display:flex;gap:4px;margin-bottom:12px;background:#e7eae5;border-radius:12px;padding:4px}
+.tabs button{flex:1;padding:10px;border-radius:9px;border:0;background:transparent;font-weight:600;font-size:14px;color:var(--mut);font-family:inherit}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .sm{font-size:13px;color:var(--mut)}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9}
-.modal .card{width:100%;max-width:520px;margin:0;border-radius:16px 16px 0 0;padding:18px}
-h2{font-size:17px;margin:0 0 8px}
+.modal{position:fixed;inset:0;background:rgba(15,20,17,.45);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.modal .card{width:100%;max-width:520px;margin:0;border-radius:18px 18px 0 0;padding:20px;border:0;max-height:92vh;overflow:auto}
+h2{font-size:16px;margin:0 0 8px;font-weight:700}
 .wxh{display:flex;justify-content:space-between;align-items:baseline}
-.wxs{margin:8px 0;padding:10px;border-radius:10px;font-weight:700;font-size:16px;background:#eef1ea}
-.wxs.ok{background:#d1e7dd;color:#0f5132}.wxs.w{background:#fff3cd;color:#7a5600}.wxs.e{background:#f8d7da;color:#842029}
+.wxs{margin:10px 0;padding:10px 12px;border-radius:10px;font-weight:600;font-size:15px;background:#f0f2ee}
+.wxs.ok{background:var(--g2);color:#14532d}.wxs.w{background:var(--o2);color:#7a5200}.wxs.e{background:var(--r2);color:#8a2420}
 .wxg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
-.wxg div{background:#f3f5f0;border-radius:8px;padding:6px 2px}.wxg b{display:block;font-size:18px}.wxg span{font-size:11px;color:var(--mut)}
-.wxh2{display:flex;gap:4px;margin-top:8px;overflow-x:auto}.wxh2 div{flex:1;min-width:44px;text-align:center;font-size:11px;background:#f3f5f0;border-radius:6px;padding:4px 2px}.wxh2 b{display:block;font-size:13px}
+.wxg div{background:#f5f6f4;border-radius:10px;padding:8px 2px}.wxg b{display:block;font-size:18px;font-variant-numeric:tabular-nums}.wxg span{font-size:11px;color:var(--mut)}
+.wxh2{display:flex;gap:4px;margin-top:8px;overflow-x:auto}.wxh2 div{flex:1;min-width:44px;text-align:center;font-size:11px;background:#f5f6f4;border-radius:8px;padding:5px 2px}.wxh2 b{display:block;font-size:13px}
 #poche{position:fixed;inset:0;background:#000;color:#9fd8b0;z-index:20;display:flex;flex-direction:column;justify-content:space-between;padding:22px 16px;text-align:center}
-#poche .pv{font-size:64px;font-weight:800;color:#e8ffe9;line-height:1}
+#poche .pv{font-size:64px;font-weight:700;color:#e8ffe9;line-height:1}
 #poche .pl{font-size:15px;color:#6f9c7c;margin-top:4px}
 #poche .pr{font-size:18px;color:#cfe;margin:8px 0}
-#poche button{border:0;border-radius:14px;padding:20px;font-size:20px;font-weight:800;width:100%;margin-top:10px}
+#poche button{border:0;border-radius:14px;padding:20px;font-size:18px;font-weight:700;width:100%;margin-top:10px;font-family:inherit}
 #pCanon.on{background:#1b6b3c;color:#fff}#pCanon.off{background:#333;color:#bbb}
 #pExit{background:#111;color:#888;border:1px solid #333!important}
-.cons{width:100%;border-collapse:collapse;font-size:17px;margin:8px 0}
-.cons td{padding:8px 4px;border-bottom:1px solid #e5e8e1}.cons td.n{text-align:right;font-weight:800;font-size:20px}
-.chk{display:flex;gap:10px;align-items:center;font-size:17px;font-weight:700;padding:12px;background:#eef5ef;border-radius:10px;margin:8px 0}
-.chk input{width:28px;height:28px}
-.bon{border:2px solid #1f5f3a;border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
-.bon h3{margin:0 0 6px;font-size:16px;color:#1f5f3a}
+.cons{width:100%;border-collapse:collapse;font-size:16px;margin:8px 0}
+.cons td{padding:8px 4px;border-bottom:1px solid var(--line)}.cons td.n{text-align:right;font-weight:700;font-size:19px}
+.chk{display:flex;gap:10px;align-items:center;font-size:16px;font-weight:600;padding:12px;background:var(--g2);border-radius:10px;margin:8px 0;color:var(--ink)}
+.chk input{width:26px;height:26px}
+.bon{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#fff}
+.bon .bh{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-bottom:2px solid var(--g);padding-bottom:8px;margin-bottom:8px}
+.bon h3{margin:0;font-size:15px;color:var(--g)}
+.bon .bno{font-size:12px;color:var(--mut);text-align:right}
+.bon .kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:14px;margin-bottom:8px}
+.bon .kv span{color:var(--mut)}
 .bon table{font-size:14px}
 .ce{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:6px}
-.ce input,.ce select{font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb;width:100%}
-@media print{header,.tabs,#vChauf,.noprint,#mapc2,#bK,.msg{display:none!important}body{background:#fff}.card{box-shadow:none}.bon{break-inside:avoid}}
+.ce input,.ce select{font-size:15px;padding:8px}
+.login{text-align:center;padding:28px 16px}
+.login p{color:var(--mut);margin:6px 0 16px}
+.sect{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);font-weight:600;margin:18px 2px 8px}
+@media print{header,.tabs,#vChauf,.noprint,#mapc2,#bK,.msg,.wx{display:none!important}body{background:#fff}.card{border:0;padding:0}.bon{break-inside:avoid;border:1px solid #999}}
 </style>
 </head>
 <body>
-<header><h1>Traitement Cerco · Rivière Noire</h1><div class="st"><div><span class="dot" id="gpsDot"></span><span id="gpsTxt">GPS…</span></div><div><span class="dot" id="netDot"></span><span id="netTxt">bureau : —</span></div></div></header>
+<header><h1><small>SAS Rivière Noire</small>Traitement Cerco</h1><div class="st"><div><span class="dot" id="gpsDot"></span><span id="gpsTxt">GPS…</span></div><div><span class="dot" id="netDot"></span><span id="netTxt">Hors ligne</span></div></div></header>
 <main>
 <div class="tabs"><button id="tChauf" class="on">Chauffeur</button><button id="tBur">Bureau</button></div>
 <div class="msg" id="msg"></div>
 
 <section id="vChauf">
- <div id="noCuve" class="card"><h2>Pas de cuve en cours</h2><div class="sm">Le tracé est en pause : rien n'est enregistré. Remplis la cuve puis touche « Nouvelle cuve ».</div><div style="height:10px"></div><button class="btn" id="newCuve">Nouvelle cuve</button></div>
- <div id="pauseBox" class="msg w hide" style="display:block;font-size:17px;text-align:center">⏸ EN PAUSE – le tracé n'est pas enregistré</div>
+ <div id="noCuve" class="card"><h2>Aucune cuve en cours</h2><div class="sm">Rien n'est enregistré entre deux cuves.</div><div style="height:12px"></div><button class="btn" id="newCuve">Démarrer une cuve</button></div>
+ <div id="pauseBox" class="msg w hide" style="display:block;text-align:center">En pause — le tracé n'est pas enregistré</div>
  <div id="cuveBox" class="hide">
   <div class="big">
-   <div class="k" id="kDone"><div class="v" id="haDone">0,0</div><div class="l">ha traités sur cette cuve</div></div>
-   <div class="k" id="kLeft"><div class="v" id="haLeft">0,0</div><div class="l" id="lLeft">ha restants pour vider la cuve</div></div>
+   <div class="k" id="kDone"><div class="v" id="haDone">0,0</div><div class="l">ha traités</div></div>
+   <div class="k" id="kLeft"><div class="v" id="haLeft">0,0</div><div class="l" id="lLeft">ha restants</div></div>
   </div>
   <div class="card" style="margin-top:8px">
    <div style="display:flex;justify-content:space-between"><b id="cuveTitle">Cuve</b><span class="sm" id="cuveMeta"></span></div>
    <div class="bar"><i id="cuveBar" style="width:0"></i></div>
    <div class="sm" style="margin-top:6px" id="parcInfo">Parcelle : —</div>
   </div>
-  <button class="btn off" id="spray">CANON ARRÊTÉ – toucher pour démarrer</button>
-  <div style="height:8px"></div><button class="btn sec" id="pocheBtn">🌙 Mode poche (le téléphone chauffe moins)</button>
+  <button class="btn off" id="spray">Canon arrêté — toucher pour démarrer</button>
+  <div style="height:8px"></div><button class="btn sec" id="pocheBtn">Mode poche (écran noir, économise la batterie)</button>
   <div style="height:8px"></div>
  </div>
- <div class="card wx" id="wx1"><div class="wxh"><b>Météo</b><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:15px">Carte vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:15px">Carte pluie (Windy)</button></div></div>
+ <div class="card wx" id="wx1"><div class="wxh"><h2 style="margin:0">Météo</h2><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:14px">Vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:14px">Pluie (Windy)</button></div></div>
  <div id="mapc"><canvas id="map"></canvas><div class="mb"><button id="zIn">+</button><button id="zOut">−</button><button id="follow" class="on" title="Suivre le tracteur">◎</button></div></div>
  <div style="height:8px"></div>
- <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:8px">⏸ Pause (remplissage, déplacement)</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
- <details class="card"><summary><b>Mes cuves et bons d'aujourd'hui</b></summary><div id="dayTbl" class="sm">Aucune cuve.</div><div id="myBons"></div></details>
- <details class="card"><summary><b>Parcelles traitées aujourd'hui</b></summary><div id="parcTbl" class="sm">—</div></details>
+ <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:10px">Pause</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
+ <details class="card"><summary>Mes cuves et bons du jour</summary><div id="dayTbl" class="sm">Aucune cuve.</div><div id="myBons"></div></details>
+ <details class="card"><summary>Parcelles traitées aujourd'hui</summary><div id="parcTbl" class="sm">—</div></details>
 </section>
 
 <section id="vBur" class="hide">
+ <div class="card login hide" id="bLogin"><h2>Accès bureau</h2><p>Réservé au responsable. Connecte-toi avec ton compte Google.</p><button class="btn" id="bLoginBtn">Se connecter avec Google</button><div class="sm" id="bLoginMsg" style="margin-top:10px"></div></div>
+ <div id="bBody">
  <div class="card"><div class="row2" style="margin:0"><input type="date" id="bDay"><button class="btn sec" id="bToday" style="padding:10px">Aujourd'hui</button></div><div class="sm" id="bLive" style="margin-top:8px">—</div></div>
- <div class="card wx" id="wx2"><div class="wxh"><b>Météo</b><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:15px">Carte vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:15px">Carte pluie (Windy)</button></div></div>
+ <div class="card wx" id="wx2"><div class="wxh"><h2 style="margin:0">Météo</h2><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:14px">Vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:14px">Pluie (Windy)</button></div></div>
  <div class="big" id="bK"></div>
  <div style="height:8px"></div>
  <div id="mapc2"></div>
  <div class="card noprint" style="margin-top:8px"><h2>Consigne de préparation des cuves</h2><div class="sm">Dose par hectare de chaque produit. Le chauffeur voit les quantités à mettre selon le volume de sa cuve (bouillie à <span id="cDoseTxt">50</span> L/ha).</div><div style="height:8px"></div><div id="consEdit"></div><div class="row2"><button class="btn sec" id="consAdd" style="padding:10px">+ Produit</button><button class="btn" id="consSave" style="padding:10px">Envoyer aux chauffeurs</button></div><div class="sm" id="consInfo"></div></div>
- <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2>Bons d'intervention</h2><button class="btn sec noprint" id="bPrint" style="width:auto;padding:8px 14px;font-size:15px">Imprimer</button></div><div id="bBons" class="sm">—</div></div>
+ <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Bons d'intervention</h2><button class="btn sec noprint" id="bPrint" style="width:auto;padding:8px 14px;font-size:15px">Imprimer</button></div><div class="sm" style="margin:6px 0 10px">Statut des parcelles sur le tour en cours (<span id="tourTxt">10</span> derniers jours, tous chauffeurs).</div><div id="bBons" class="sm">—</div></div>
  <div class="card noprint" style="margin-top:8px"><h2>Cuves</h2><div id="bCuves" class="sm">—</div></div>
  <div class="card"><h2>Parcelles</h2><div id="bParc" class="sm">—</div></div>
+ <div class="sm noprint" style="text-align:center;margin:4px 0 12px">Connecté : <span id="bWho">—</span> · <a href="#" id="bOut">se déconnecter</a></div>
+ </div>
 </section>
 
 <div class="card sm" style="margin-top:10px">
- <details><summary>Réglages</summary>
+ <details><summary>Réglages</summary><div style="height:4px"></div>
  <label>Dose (L/ha de bouillie)<input type="number" id="cDose" step="any"></label>
  <label>Portée du canon (m)<input type="number" id="cLarg" step="any"></label>
  <label>Côté traité<select id="cSide" style="font-size:18px;padding:10px;width:100%"><option value="D">À droite du tracteur</option><option value="G">À gauche du tracteur</option><option value="2">Des deux côtés</option></select></label>
@@ -131,6 +151,7 @@ h2{font-size:17px;margin:0 0 8px}
  <label>Seuil d'alerte parcelle incomplète (%)<input type="number" id="cSeuil" step="any"></label>
  <label>Vent maximum pour traiter (km/h)<input type="number" id="cVent" step="any"></label>
  <label>Alerte pluie dans les (heures)<input type="number" id="cPluie" step="any"></label>
+ <label>Durée d'un tour de traitement (jours)<input type="number" id="cTour" step="1"></label>
  <div style="height:8px"></div><button class="btn sec" id="cTest">Tester la voix</button>
  <div style="height:8px"></div><button class="btn sec" id="cWho">Changer de chauffeur</button>
  <p>Pour un relevé fiable : écran allumé, téléphone branché dans la cabine, application ouverte au premier plan.</p>
@@ -151,6 +172,12 @@ h2{font-size:17px;margin:0 0 8px}
 <div class="modal hide" id="mWin"><div class="card" style="max-width:900px;padding:10px">
  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="margin:0">Windy – Rivière Noire</h2><button class="btn sec" id="winClose" style="width:auto;padding:8px 16px;font-size:15px">Fermer</button></div>
  <iframe id="winFrame" style="width:100%;height:70vh;border:0;border-radius:10px" loading="lazy"></iframe>
+</div></div>
+<div class="modal hide" id="mCode"><div class="card">
+ <h2>Code d'accès</h2><div class="sm">Code de l'exploitation, donné par le responsable. À saisir une seule fois sur ce téléphone.</div>
+ <div style="height:12px"></div><input type="password" inputmode="numeric" id="codeIn" placeholder="Code">
+ <div class="sm ko" id="codeErr" style="margin-top:8px"></div>
+ <div style="height:12px"></div><button class="btn" id="codeOk">Valider</button>
 </div></div>
 <div class="modal hide" id="mWho"><div class="card">
  <h2>Qui conduit ?</h2><div class="sm">Ton prénom (ou le nom du tracteur). Il sert à te reconnaître au bureau.</div>
@@ -186,7 +213,7 @@ const hm=t=>{const d=new Date(t);return pad(d.getHours())+'h'+pad(d.getMinutes()
 const KEY='cerco_rn_v1';
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
-const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85,ventMax:19,pluieH:2};const SW=c=>c.larg*(c.side==='2'?2:1);
+const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85,ventMax:19,pluieH:2,tour:10};const SW=c=>c.larg*(c.side==='2'?2:1);
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
 S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
@@ -306,22 +333,42 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
+const BOSS='kzelela@gayac.mq';
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
- if(!cfg){$('netTxt').textContent='bureau : non relié';$('fbInfo').textContent='Suivi bureau non configuré (FIREBASE_CONFIG vide) : les données restent sur ce téléphone.';return;}
+ if(!cfg){$('netTxt').textContent='Hors ligne';return;}
  try{
   const V='10.12.2',B='https://www.gstatic.com/firebasejs/'+V+'/';
   const app=await import(B+'firebase-app.js'),fs=await import(B+'firebase-firestore.js'),au=await import(B+'firebase-auth.js');
   const a=app.initializeApp(cfg);
   let db;try{db=fs.initializeFirestore(a,{localCache:fs.persistentLocalCache()})}catch(e){db=fs.getFirestore(a)}
-  await au.signInAnonymously(au.getAuth(a));
-  FB.db=db;FB.m=fs;FB.ok=true;$('netTxt').textContent='bureau : relié';$('netDot').className='dot on';
-  $('fbInfo').textContent='Suivi bureau relié.';
-  onFB();
- }catch(e){console.error(e);$('netTxt').textContent='bureau : erreur';$('netDot').className='dot off';$('fbInfo').textContent='Erreur de liaison bureau : '+(e.message||e);}
+  const auth=au.getAuth(a);FB.db=db;FB.m=fs;FB.au=au;FB.auth=auth;
+  try{await au.getRedirectResult(auth);}catch(e){}
+  if(auth.authStateReady)await auth.authStateReady();
+  if(!auth.currentUser)await au.signInAnonymously(auth);
+  await afterLogin();
+ }catch(e){console.error(e);$('netTxt').textContent='Erreur réseau';$('netDot').className='dot off';$('fbInfo').textContent='Erreur de liaison : '+(e.message||e);}
 }
+async function afterLogin(){
+ const u=FB.auth.currentUser;FB.uid=u.uid;FB.email=u.email||'';FB.boss=!!(u.email&&u.email.toLowerCase()===BOSS&&u.emailVerified);
+ if(!FB.boss){
+  let ok=!!S.member;
+  try{const d=await FB.m.getDoc(FB.m.doc(FB.db,'membres',FB.uid));ok=d.exists();}catch(e){}
+  if(!ok){S.member=false;save();$('netTxt').textContent='Code requis';$('netDot').className='dot off';$('mCode').classList.remove('hide');return;}
+  S.member=true;save();
+ }
+ FB.ok=true;$('netTxt').textContent=FB.boss?'Bureau connecté':'Relié au bureau';$('netDot').className='dot on';
+ $('fbInfo').textContent=FB.boss?'Connecté en responsable ('+FB.email+').':'Téléphone autorisé.';
+ onFB();
+}
+$('codeOk').onclick=async()=>{const c=$('codeIn').value.trim();if(!c)return;$('codeErr').textContent='';
+ try{await FB.m.setDoc(FB.m.doc(FB.db,'membres',FB.uid),{code:c,who:S.who||'',t:Date.now()});$('mCode').classList.add('hide');$('codeIn').value='';await afterLogin();}
+ catch(e){$('codeErr').textContent=(e&&e.code==='permission-denied')?'Code incorrect.':'Pas de réseau : réessaie.';}};
+async function bossLogin(){const au=FB.au;const p=new au.GoogleAuthProvider();p.setCustomParameters({login_hint:BOSS});
+ try{await au.signInWithPopup(FB.auth,p);}catch(e){if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){await au.signInWithRedirect(FB.auth,p);return;}$('bLoginMsg').textContent='Connexion impossible : '+(e.code||e.message||e);return;}
+ FB.ok=false;await afterLogin();startBureau();}
 let fbHooks=[];function onFB(){fbHooks.forEach(f=>f());}
-function fbSet(path,data){if(!FB.ok)return;const m=FB.m;try{m.setDoc(m.doc(FB.db,...path.split('/')),data,{merge:true}).catch(()=>{});}catch(e){}}
+function fbSet(path,data){if(!FB.ok)return;const m=FB.m;data=Object.assign({},data,{uid:FB.uid});try{m.setDoc(m.doc(FB.db,...path.split('/')),data,{merge:true}).catch(()=>{});}catch(e){}}
 
 /* ======================= MODE CHAUFFEUR ======================= */
 const M1=new MapView($('map'));M1.followBtn=$('follow');M1.larg=S.cfg.larg;
@@ -338,9 +385,9 @@ function renderChauf(){
   $('kLeft').className='k '+(left>=0?'r':'o');$('kDone').className='k g';
   $('cuveTitle').textContent='Cuve n° '+c.n+' · '+c.vol+' L';$('cuveMeta').textContent='objectif '+f1(c.obj)+' ha · depuis '+hm(c.start);
   const b=$('cuveBar');b.style.width=Math.min(100,pct*100)+'%';b.className=pct>1.1?'bad':pct>1?'warn':'';
-  $('pauseBtn').textContent=S.paused?'▶ Reprendre le traitement':'⏸ Pause (remplissage, déplacement)';$('pauseBtn').className='btn '+(S.paused?'':'org');
+  $('pauseBtn').textContent=S.paused?'Reprendre le traitement':'Pause';$('pauseBtn').className='btn '+(S.paused?'':'org');
   $('spray').classList.toggle('hide',!!S.paused);
-  const sp=$('spray');sp.className='btn '+(S.on?'on':'off');sp.textContent=S.on?'CANON EN MARCHE – toucher pour arrêter':'CANON ARRÊTÉ – toucher pour démarrer';
+  const sp=$('spray');sp.className='btn '+(S.on?'on':'off');sp.textContent=S.on?'Canon en marche':'Canon arrêté — toucher pour démarrer';
  }
  /* parcelle courante */
  if(lastPos){const i=parcAt(lastPos[0],lastPos[1]);$('parcInfo').innerHTML=i?'Parcelle : <b>'+NAMES[i-1]+'</b> · couverte à <b>'+Math.round(100*built.cov.n[i]/tot[i])+' %</b> ('+f1(parcHa(i))+' ha)':'Hors parcelle de production';}
@@ -349,7 +396,7 @@ function renderChauf(){
  $('dayTbl').innerHTML=rows.length?'<table><tr><th>Cuve</th><th>Heure</th><th class="n">Obj.</th><th class="n">Fait</th><th class="n">Écart</th></tr>'+rows.map(k=>{const r=cuveStats(k),e=k.obj?(r.ha-k.obj)/k.obj:0;const cl=!k.end?'':Math.abs(e)<=.1?'ok':Math.abs(e)<=.2?'wa':'ko';
   return '<tr><td>'+k.n+' · '+k.vol+' L</td><td>'+hm(k.start)+(k.end?'–'+hm(k.end):' (en cours)')+'</td><td class="n">'+f1(k.obj)+'</td><td class="n">'+f1(r.ha)+'</td><td class="n '+cl+'">'+(k.end?(e>0?'+':'')+Math.round(e*100)+' %':'')+'</td></tr>'}).join('')+'</table>':'Aucune cuve.';
  renderParcTbl($('parcTbl'),built.cov);
- $('myBons').innerHTML=(S.bons||[]).slice().reverse().map(bonHtml).join('');
+ $('myBons').innerHTML=(S.bons||[]).slice().reverse().map(b=>bonHtml(b)).join('');
  save();
 }
 function renderParcTbl(el,cov){
@@ -387,16 +434,9 @@ function checkAlerts(){
    if(pc<S.cfg.seuil&&pc>30){const t=NAMES[k-1]+' quittée, couverte à '+Math.round(pc)+' pour cent. Il reste des traces.';say(t);msg(t,'w');}}}
 }
 let pendExit=null;
-/* ---------- notifications ntfy (téléphone de Kévin) ---------- */
-const NTFY='https://ntfy.sh/cerco-rn-1a3266befb';
-if(!S.nq)S.nq=[];
-function notif(title,body,tag,prio){S.nq.push({title,body,tag:tag||'',prio:prio||3,t:Date.now()});save();sendNotifs();}
-let nBusy=false;
-async function sendNotifs(){if(nBusy||!S.nq.length||!navigator.onLine)return;nBusy=true;
- try{while(S.nq.length){const n=S.nq[0];const late=Date.now()-n.t>120000?' (envoyé en retard, réseau coupé)':'';
-  const r=await fetch(NTFY+'?title='+encodeURIComponent(n.title)+'&tags='+encodeURIComponent(n.tag)+'&priority='+n.prio,{method:'POST',body:n.body+late});
-  if(!r.ok)break;S.nq.shift();save();}}catch(e){}nBusy=false;}
-setInterval(sendNotifs,60000);window.addEventListener('online',sendNotifs);
+/* notifications : retirées (24/11/2026) */
+function notif(){}
+if(S.nq)delete S.nq;
 const who=()=>S.who||'Chauffeur';
 const parcNow=()=>{if(!lastPos)return '';const i=parcAt(lastPos[0],lastPos[1]);return i?NAMES[i-1]:'hors parcelle';};
 /* tracteur immobile : cuve en cours, pas en pause, moins de 15 m en 10 min */
@@ -408,6 +448,7 @@ setInterval(()=>{if(lastPos&&S.cur&&!S.paused)trackStill(lastPos[0],lastPos[1],D
 /* rendu économe : en mode poche seulement l'écran noir ; sinon au plus toutes les 3 s */
 let lrT=0;
 function lightRender(){const now=Date.now();if(POCHE){renderPoche();return;}if(document.visibilityState!=='visible')return;if(now-lrT<3000)return;lrT=now;renderChauf();M1.draw();}
+setInterval(()=>{if(S.cur)lightRender();},4000);
 function renderPoche(){const c=cur();$('pWho').textContent=(S.who||'')+(c?' · cuve '+c.n+' · '+c.vol+' L':'');
  if(lastPos){const i=parcAt(lastPos[0],lastPos[1]);$('pParc').textContent=i?NAMES[i-1]:'Hors parcelle';}
  if(c){const r=cuveStats(c),left=c.obj-r.ha;$('pDone').textContent=f1(r.ha);$('pLeft').textContent=f1(Math.abs(left));$('pLeftL').textContent=left>=0?'ha restants pour vider la cuve':'ha AU-DELÀ de l\'objectif';}
@@ -469,13 +510,23 @@ $('eBack').onclick=()=>$('mEnd').classList.add('hide');
 $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
  liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Bon d\'intervention enregistré.');sendCuve(c);flushPts();
  notif(who()+' : cuve '+c.n+' terminée',hm(c.start)+' – '+hm(c.end)+' · '+f1(r.ha)+' ha pour '+f1(c.obj)+' prévus ('+(e>0?'+':'')+Math.round(e*100)+' %).','white_check_mark',3);
- const bon=makeBon(c);S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
+ const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
   if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=i?NAMES[i-1]:'Hors parcelle';per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
  const parc=Object.entries(per).filter(x=>x[1]>=0.05).sort((a,b)=>b[1]-a[1]).map(([n,ha])=>({n,ha:Math.round(ha*100)/100}));
  return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0};}
-function bonHtml(b){const du=Math.round((b.end-b.start)/60000);
+function bonNo(b){return b.day.replace(/-/g,'').slice(2)+'-'+String(b.who||'X').slice(0,3).toUpperCase()+'-'+b.n;}
+function stTag(st){if(!st)return '';return st.fini?'<span class="tag ok">Finie</span>':'<span class="tag wa">À terminer · '+st.pc+' %</span>';}
+function bonHtml(b,ST){const du=Math.round((b.end-b.start)/60000);const loc=!ST;
+ const stOf=n=>ST?ST[n]:(b.st&&b.st[n]?b.st[n]:null);
+ return '<div class="bon"><div class="bh"><h3>Bon d\'intervention<br><span style="font-weight:500;color:var(--ink)">Traitement Cerco</span></h3><div class="bno">N° '+bonNo(b)+'<br>'+b.day.split('-').reverse().join('/')+'</div></div>'+
+ '<div class="kv"><span>Chauffeur</span><b>'+(b.who||'—')+'</b><span>Horaires</span><div><b>'+hm(b.start)+' – '+hm(b.end)+'</b> · '+Math.floor(du/60)+' h '+pad(du%60)+'</div>'+
+ '<span>Cuve</span><div>n° '+b.n+' · '+b.vol+' L · '+b.dose+' L/ha</div>'+
+ '<span>Produits</span><div>'+(b.prep&&b.prep.length?b.prep.map(x=>x.nom+' '+x.q.toLocaleString('fr-FR')+' '+x.u).join(' · ')+(b.eau!=null?' · eau '+f0(b.eau)+' L':''):'—')+'</div>'+
+ '<span>Surface</span><div><b>'+f1(b.ha)+' ha</b> / '+f1(b.obj)+' ha prévus · <span class="'+(Math.abs(b.ecart)<=10?'ok':'ko')+'">'+(b.ecart>0?'+':'')+b.ecart+' %</span></div></div>'+
+ '<table><tr><th>Parcelle traitée</th><th class="n">ha (cuve)</th><th class="n">Statut'+(loc?' (aujourd\'hui)':'')+'</th></tr>'+(b.parc.length?b.parc.map(x=>'<tr><td>'+x.n+'</td><td class="n">'+f1(x.ha)+'</td><td class="n">'+(x.n==='Hors parcelle'?'':stTag(stOf(x.n)))+'</td></tr>').join(''):'<tr><td colspan="3">Aucune trace canon en marche</td></tr>')+'</table></div>';}
+function bonHtmlOld(b){const du=Math.round((b.end-b.start)/60000);
  return '<div class="bon"><h3>Bon d\'intervention · Traitement Cerco</h3><table>'+
  '<tr><td>Date</td><td><b>'+b.day.split('-').reverse().join('/')+'</b></td></tr><tr><td>Chauffeur</td><td><b>'+(b.who||'—')+'</b></td></tr>'+
  '<tr><td>Horaires</td><td><b>'+hm(b.start)+' – '+hm(b.end)+'</b> ('+Math.floor(du/60)+' h '+pad(du%60)+')</td></tr>'+
@@ -491,7 +542,7 @@ $('cancelCuve').onclick=function(){const b=this;if(b.dataset.c){if(S.cur)notif(w
 $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M1.setFollow(false);M1.zoom(1/1.4)};$('follow').onclick=()=>{M1.setFollow(!M1.follow);if(!M1.follow){M1.fit();}M1.draw();};
 
 /* réglages */
-[['cDose','dose'],['cLarg','larg'],['cAcc','acc'],['cSeuil','seuil'],['cVent','ventMax'],['cPluie','pluieH']].forEach(([id,k])=>{const e=$(id);e.value=S.cfg[k];e.onchange=()=>{const v=parseFloat(e.value);if(v>0){S.cfg[k]=v;M1.larg=S.cfg.larg;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();}};});
+[['cDose','dose'],['cLarg','larg'],['cAcc','acc'],['cSeuil','seuil'],['cVent','ventMax'],['cPluie','pluieH'],['cTour','tour']].forEach(([id,k])=>{const e=$(id);e.value=S.cfg[k];e.onchange=()=>{const v=parseFloat(e.value);if(v>0){S.cfg[k]=v;M1.larg=S.cfg.larg;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();}};});
 $('cSide').value=S.cfg.side;$('cSide').onchange=()=>{S.cfg.side=$('cSide').value;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();};
 function askWho(){$('whoIn').value=S.who||'';$('mWho').classList.remove('hide');setTimeout(()=>$('whoIn').focus(),100);}
 $('whoOk').onclick=()=>{const v=$('whoIn').value.trim();if(!v)return;S.who=v;save();$('mWho').classList.add('hide');showWho();if(S.cur)sendCuve(S.cur);};
@@ -502,7 +553,15 @@ $('cTest').onclick=()=>say('Test de la voix. Cuve de 600 litres, objectif 12 hec
 
 /* ======================= MODE BUREAU ======================= */
 let M2=null,bUnsub=[],bDay=dayOf(Date.now()),bPts={},bCuves={},bLive={},bBons={};
-function renderBons(){const L=Object.values(bBons).sort((a,b)=>a.start-b.start);$('bBons').innerHTML=L.length?L.map(bonHtml).join(''):'Aucun bon pour cette journée.';}
+let tourCache={key:'',ST:null};
+async function tourStatus(){const N=Math.max(1,Math.round(S.cfg.tour||10));$('tourTxt').textContent=N;const key=bDay+'|'+N+'|'+Object.keys(bBons).length;
+ if(tourCache.key===key)return tourCache.ST;const m=FB.m,db=FB.db;const cov=new Cover();const end=new Date(bDay+'T12:00');
+ for(let i=0;i<N;i++){const d=dayOf(end.getTime()-i*864e5);try{const P=await m.getDocs(m.collection(db,'jours',d,'pts'));const G={};P.forEach(x=>{const v=x.data();try{(G[v.who||'?']=G[v.who||'?']||[]).push(...JSON.parse(v.p))}catch(e){}});Object.values(G).forEach(ps=>build(ps.sort((a,b)=>a[0]-b[0]),S.cfg,cov));}catch(e){}}
+ const ST={};for(let i=1;i<=NAMES.length;i++){if(cov.n[i]>0){const pc=Math.round(100*cov.n[i]/tot[i]);ST[NAMES[i-1]]={pc,fini:pc>=S.cfg.seuil};}}
+ tourCache={key,ST};return ST;}
+async function renderBons(){const L=Object.values(bBons).sort((a,b)=>a.start-b.start);if(!L.length){$('bBons').innerHTML='Aucun bon pour cette journée.';return;}
+ let ST=null;if(FB.ok&&FB.boss){try{ST=await tourStatus();}catch(e){}}
+ $('bBons').innerHTML=L.map(b=>bonHtml(b,ST||undefined)).join('');}
 let consDraft=null;
 function renderCons(){if(!$('consEdit'))return;$('cDoseTxt').textContent=S.cfg.dose;if(!consDraft)consDraft=JSON.parse(JSON.stringify(S.consigne.produits||[]));
  $('consEdit').innerHTML=consDraft.map((x,i)=>'<div class="ce"><input data-i="'+i+'" data-k="nom" value="'+(x.nom||'').replace(/"/g,'')+'" placeholder="Produit"><input data-i="'+i+'" data-k="dose" type="number" step="any" value="'+(x.dose||'')+'" placeholder="Dose/ha"><select data-i="'+i+'" data-k="u"><option'+(x.u==='kg'?'':' selected')+'>L</option><option'+(x.u==='kg'?' selected':'')+'>kg</option></select><button class="btn sec" data-del="'+i+'" style="padding:8px">✕</button></div>').join('')+'<input id="consNote" placeholder="Remarque pour les chauffeurs (facultatif)" value="'+(S.consigne.note||'').replace(/"/g,'')+'" style="font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb;width:100%;margin-bottom:8px">';
@@ -512,6 +571,14 @@ function renderCons(){if(!$('consEdit'))return;$('cDoseTxt').textContent=S.cfg.d
 $('consAdd').onclick=()=>{if(!consDraft)consDraft=[];consDraft.push({nom:'',dose:0,u:'L'});renderCons();};
 $('consSave').onclick=()=>{const c={produits:consDraft.filter(x=>x.nom&&x.dose>0),note:($('consNote')||{}).value||'',maj:Date.now()};S.consigne=c;save();fbSet('config/consigne',c);consDraft=null;renderCons();msg(FB.ok?'Consigne envoyée aux chauffeurs.':'Bureau non relié : consigne gardée sur ce téléphone seulement.',FB.ok?'i':'w');};
 $('bPrint').onclick=()=>window.print();
+$('bLoginBtn').onclick=()=>{if(FB.au)bossLogin();};
+$('bOut').onclick=async e=>{e.preventDefault();try{await FB.au.signOut(FB.auth);}catch(x){}FB.ok=false;FB.boss=false;location.reload();};
+/* purge RGPD : traces GPS de plus de 60 jours, une fois par jour, par le bureau */
+async function purgeOld(){try{const k='cerco_purge';if(localStorage.getItem(k)===dayOf(Date.now()))return;localStorage.setItem(k,dayOf(Date.now()));
+ const m=FB.m,db=FB.db,lim=dayOf(Date.now()-60*864e5);const J=await m.getDocs(m.collection(db,'jours'));
+ for(const d of J.docs){if(d.id>=lim)continue;const P=await m.getDocs(m.collection(db,'jours',d.id,'pts'));for(const p of P.docs)await m.deleteDoc(p.ref);}
+ const L=await m.getDocs(m.collection(db,'live'));for(const d of L.docs){const x=d.data();if(!x.t||Date.now()-x.t>7*864e5)await m.deleteDoc(d.ref);}
+}catch(e){console.warn('purge',e);}}
 const COLS=['#0b3d20','#1e5bd8','#c0392b','#8e44ad','#d35400','#16a085'];
 function showTab(t){$('tChauf').classList.toggle('on',t==='c');$('tBur').classList.toggle('on',t==='b');$('vChauf').classList.toggle('hide',t!=='c');$('vBur').classList.toggle('hide',t!=='b');
  try{localStorage.setItem('cerco_tab',t)}catch(e){}
@@ -519,6 +586,9 @@ function showTab(t){$('tChauf').classList.toggle('on',t==='c');$('tBur').classLi
 let gpsStarted=false;
 $('tChauf').onclick=()=>showTab('c');$('tBur').onclick=()=>showTab('b');
 function startBureau(){
+ const isB=FB.boss;$('bLogin').classList.toggle('hide',!!isB);$('bBody').classList.toggle('hide',!isB);
+ if(!isB){$('bLoginBtn').disabled=!FB.au;$('bLoginMsg').textContent=FB.au?'':'Connexion au serveur en cours…';return;}
+ $('bWho').textContent=FB.email;purgeOld();
  if(!M2){$('mapc2').innerHTML='<div id="mapc" style="height:55vh"><canvas id="map2" style="width:100%;height:100%;display:block"></canvas><div class="mb"><button id="z2In">+</button><button id="z2Out">−</button><button id="f2">◎</button></div></div>';
   M2=new MapView($('map2'));M2.followBtn=$('f2');M2.setFollow(false);M2.larg=S.cfg.larg;
   $('z2In').onclick=()=>M2.zoom(1.4);$('z2Out').onclick=()=>M2.zoom(1/1.4);$('f2').onclick=()=>{M2.setFollow(!M2.follow);if(!M2.follow)M2.fit();M2.draw();};
@@ -572,11 +642,11 @@ function wxEval(){
  const c=WX.current,h=WX.hourly,vm=S.cfg.ventMax,ph=S.cfg.pluieH;
  const n=Math.min(ph,h.time.length);let rainSoon=0,probMax=0,firstRain=null;
  for(let i=0;i<n;i++){rainSoon+=h.precipitation[i]||0;probMax=Math.max(probMax,h.precipitation_probability[i]||0);if(firstRain==null&&(h.precipitation[i]||0)>=0.2)firstRain=h.time[i].slice(11,16);}
- let lvl='ok',txt='✅ Conditions correctes pour traiter';
- if(c.wind_speed_10m>vm){lvl='e';txt='⛔ Vent '+Math.round(c.wind_speed_10m)+' km/h : au-dessus de '+vm+' km/h, ne pas traiter';}
- else if((c.precipitation||0)>=0.2){lvl='e';txt='⛔ Il pleut : traitement lessivé';}
- else if(rainSoon>=0.5||probMax>=60){lvl='w';txt='⚠ Pluie probable dans les '+ph+' h'+(firstRain?' (vers '+firstRain+')':'')+' : risque de lessivage';}
- else if(c.wind_gusts_10m>vm*1.6){lvl='w';txt='⚠ Rafales à '+Math.round(c.wind_gusts_10m)+' km/h : surveiller la dérive';}
+ let lvl='ok',txt='Conditions correctes pour traiter';
+ if(c.wind_speed_10m>vm){lvl='e';txt='Vent '+Math.round(c.wind_speed_10m)+' km/h : au-dessus de '+vm+' km/h, ne pas traiter';}
+ else if((c.precipitation||0)>=0.2){lvl='e';txt='Pluie en cours : traitement lessivé';}
+ else if(rainSoon>=0.5||probMax>=60){lvl='w';txt='Pluie probable dans les '+ph+' h'+(firstRain?' (vers '+firstRain+')':'')+' : risque de lessivage';}
+ else if(c.wind_gusts_10m>vm*1.6){lvl='w';txt='Rafales à '+Math.round(c.wind_gusts_10m)+' km/h : surveiller la dérive';}
  return {lvl,txt};
 }
 function renderWx(){
@@ -607,7 +677,7 @@ if(location.hash==='#bureau')t0='b';if(location.hash==='#chauffeur')t0='c';
 renderChauf();showTab(t0);
 initFB();
 window.addEventListener('online',()=>flushPts());
-window.__cerco={S,addPoint,NAMES,toXY,FB};fbHooks.push(()=>{if(!$('vBur').classList.contains('hide'))subBureau();});
+window.__cerco={S,addPoint,NAMES,toXY,FB};fbHooks.push(()=>{if(!$('vBur').classList.contains('hide'))startBureau();});
 })();
 </script>
 </body>
