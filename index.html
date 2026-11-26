@@ -185,6 +185,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
  <div style="height:12px"></div><input type="password" inputmode="numeric" id="codeIn" placeholder="Code">
  <div class="sm ko" id="codeErr" style="margin-top:8px"></div>
  <div style="height:12px"></div><button class="btn" id="codeOk">Valider</button>
+ <button class="btn sec" id="codeBoss" style="margin-top:10px">Prestataire ou administrateur : se connecter avec Google</button>
 </div></div>
 <div class="modal hide" id="mWho"><div class="card">
  <h2>Qui conduit ?</h2><div class="sm">Ton prénom (ou le nom du tracteur). Il sert à te reconnaître au bureau.</div>
@@ -373,6 +374,7 @@ async function afterLogin(){
 $('codeOk').onclick=async()=>{const c=$('codeIn').value.trim();if(!c)return;$('codeErr').textContent='';
  try{await FB.m.setDoc(FB.m.doc(FB.db,'membres',FB.uid),{code:c,who:S.who||'',t:Date.now()});$('mCode').classList.add('hide');$('codeIn').value='';await afterLogin();}
  catch(e){$('codeErr').textContent=(e&&e.code==='permission-denied')?'Code incorrect.':'Pas de réseau : réessaie.';}};
+$('codeBoss').onclick=()=>{$('mCode').classList.add('hide');showTab('b');if(FB.au)bossLogin();};
 async function bossLogin(){const au=FB.au;const p=new au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
  try{await au.signInWithPopup(FB.auth,p);}catch(e){if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){await au.signInWithRedirect(FB.auth,p);return;}$('bLoginMsg').textContent='Connexion impossible : '+(e.code||e.message||e);return;}
  FB.ok=false;await afterLogin();startBureau();}
