@@ -364,7 +364,7 @@ async function afterLogin(){
  if(!FB.boss){
   let ok=!!S.member;
   try{const d=await FB.m.getDoc(FB.m.doc(FB.db,'membres',FB.uid));ok=d.exists();}catch(e){}
-  if(!ok){S.member=false;save();$('netTxt').textContent='Code requis';$('netDot').className='dot off';if(!(/bureau/.test(location.hash)||!$('vBur').classList.contains('hide'))){$('mWho').classList.add('hide');$('mCode').classList.remove('hide');}return;}
+  if(!ok){S.member=false;save();$('netTxt').textContent='Code requis';$('netDot').className='dot off';if(!(/bureau/.test(location.hash)||!$('vBur').classList.contains('hide'))){$('mWho').classList.add('hide');$('mCode').classList.remove('hide');}else{$('mCode').classList.add('hide');startBureau();}return;}
   S.member=true;save();
  }
  FB.ok=true;$('netTxt').textContent=FB.boss?'Bureau connecté':'Relié au bureau';$('netDot').className='dot on';
