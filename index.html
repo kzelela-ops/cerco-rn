@@ -125,6 +125,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
  <div style="height:8px"></div>
  <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:10px">Pause</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
  <details class="card"><summary>Mes cuves et bons du jour</summary><div id="dayTbl" class="sm">Aucune cuve.</div><div id="myBons"></div></details>
+ <button class="btn sec hide" id="chFin" style="margin-bottom:10px">Chantier terminé</button>
  <details class="card"><summary>Parcelles traitées aujourd'hui</summary><div id="parcTbl" class="sm">—</div></details>
 </section>
 
@@ -136,7 +137,10 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
  <div class="big" id="bK"></div>
  <div style="height:8px"></div>
  <div id="mapc2"></div>
- <div class="card noprint" style="margin-top:8px"><h2>Consigne de préparation des cuves</h2><div class="sm">Dose par hectare de chaque produit. Le chauffeur voit les quantités à mettre selon le volume de sa cuve (bouillie à <span id="cDoseTxt">50</span> L/ha).</div><div style="height:8px"></div><div id="consEdit"></div><div class="row2"><button class="btn sec" id="consAdd" style="padding:10px">+ Produit</button><button class="btn" id="consSave" style="padding:10px">Envoyer aux chauffeurs</button></div><div class="sm" id="consInfo"></div></div>
+ <div class="card noprint" style="margin-top:8px"><h2>Chantiers</h2><div class="sm">Un chantier par demande d'intervention. Les chauffeurs ne voient que les chantiers dont la demande signée est reçue.</div><button class="btn" id="chNew" style="padding:10px;margin:8px 0">+ Nouveau chantier</button><div id="chForm" class="hide"><div id="chF"></div><div class="row2"><button class="btn sec" id="chCancel" style="padding:10px">Annuler</button><button class="btn" id="chSave" style="padding:10px">Enregistrer</button></div></div><div id="chList" class="sm">—</div></div>
+ <div class="card noprint"><details><summary><b>Clients</b></summary><button class="btn sec" id="clNew" style="padding:10px;margin:8px 0">+ Nouveau client</button><div id="clForm" class="hide"><div id="clF"></div><div class="row2"><button class="btn sec" id="clCancel" style="padding:10px">Annuler</button><button class="btn" id="clSave" style="padding:10px">Enregistrer</button></div><button class="btn sec hide" id="clDel" style="padding:8px;margin-top:6px">Supprimer ce client</button></div><div id="clList" class="sm">—</div></details></div>
+ <div class="card noprint"><details><summary><b>Prestataire</b> (en-tête des documents)</summary><div id="prE" style="margin-top:8px"></div><button class="btn" id="prSave" style="padding:10px">Enregistrer</button></details></div>
+ <div class="card noprint hide" style="margin-top:8px"><h2>Consigne de préparation des cuves</h2><div class="sm">Dose par hectare de chaque produit. Le chauffeur voit les quantités à mettre selon le volume de sa cuve (bouillie à <span id="cDoseTxt">50</span> L/ha).</div><div style="height:8px"></div><div id="consEdit"></div><div class="row2"><button class="btn sec" id="consAdd" style="padding:10px">+ Produit</button><button class="btn" id="consSave" style="padding:10px">Envoyer aux chauffeurs</button></div><div class="sm" id="consInfo"></div></div>
  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Bons d'intervention</h2><button class="btn sec noprint" id="bPrint" style="width:auto;padding:8px 14px;font-size:15px">Imprimer</button></div><div class="sm" style="margin:6px 0 10px">Bons générés par les chauffeurs. Les traces GPS sont supprimées du serveur dès qu'un bon est généré.<span id="tourTxt" class="hide"></span></div><div id="bBons" class="sm">—</div></div>
  <div class="card noprint" style="margin-top:8px"><h2>Cuves</h2><div id="bCuves" class="sm">—</div></div>
  <div class="card"><h2>Parcelles</h2><div id="bParc" class="sm">—</div></div>
@@ -164,7 +168,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
 </main>
 
 <div class="modal hide" id="mCuve"><div class="card">
- <h2>Nouvelle cuve</h2><div class="sm">Volume de bouillie dans la cuve :</div>
+ <h2>Nouvelle cuve</h2><div id="chSel"></div><div class="sm">Volume de bouillie dans la cuve :</div>
  <div class="vols"><button data-v="400">400 L</button><button data-v="600">600 L</button><button data-v="800">800 L</button></div>
  <input type="number" id="volFree" placeholder="Autre volume (L)">
  <div class="sm" id="volObj" style="margin:10px 0;font-size:16px">&nbsp;</div>
@@ -275,7 +279,7 @@ function build(pts,cfg,cov0){
 function sprayedHa(pts,cfg,t0,t1){
  let prev=null,d=0;
  for(const p of pts){if(p[0]<t0||(t1&&p[0]>t1))continue;if(p[4]>cfg.acc)continue;
-  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3]&&parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2))d+=dd;}
+  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3]&&(S.noGeo||parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2)))d+=dd;}
   prev=p;}
  return {m:d,ha:d*SW(cfg)/1e4};
 }
@@ -478,7 +482,7 @@ function flushPts(){
 }
 function sendCuve(c){const r=cuveStats(c);fbSet('jours/'+S.day+'/cuves/'+WID()+'_'+c.id,{who:S.who||'',n:c.n,vol:c.vol,obj:c.obj,start:c.start,end:c.end||null,ha:r.ha,dose:S.cfg.dose,larg:S.cfg.larg,side:S.cfg.side});fbSet('jours/'+S.day,{maj:Date.now()});}
 fbHooks.push(()=>{if(S.cur)sendCuve(S.cur);flushPts();(S.bons||[]).forEach(b=>fbSet('jours/'+b.day+'/bons/'+WID()+'_'+b.day+'_'+b.n+'_'+b.start,b));
- try{FB.m.onSnapshot(FB.m.doc(FB.db,'config','consigne'),d=>{const x=d.data();if(x&&x.produits){S.consigne=x;save();if(!$('mCuve').classList.contains('hide'))showObj();renderCons();}});}catch(e){}});
+ try{FB.m.onSnapshot(FB.m.doc(FB.db,'config','consigne'),d=>{const x=d.data();if(x&&x.produits&&!S.chId){S.consigne=x;save();if(!$('mCuve').classList.contains('hide'))showObj();renderCons();}});}catch(e){}});
 
 /* GPS */
 function startGPS(){
@@ -497,12 +501,12 @@ function showObj(){const v=selVol||parseFloat($('volFree').value);$('volObj').in
  const P=v>0?prepOf(v):null;const has=P&&P.L.length;
  $('prep').innerHTML=((S.consigne.client||S.consigne.donneur)&&v>0?'<div class="msg i show" style="margin:6px 0">Donneur d\'ordre : '+esc(S.consigne.client||S.consigne.donneur)+'</div>':'')+(has?'<h2 style="margin-top:6px">À mettre dans la cuve</h2><table class="cons">'+P.L.map(x=>'<tr><td>'+x.nom+'</td><td class="n">'+x.q.toLocaleString('fr-FR')+' '+x.u+'</td></tr>').join('')+'<tr><td>Eau (compléter jusqu\'à '+v+' L)</td><td class="n">'+f0(P.eau)+' L</td></tr></table>'+(S.consigne.note?'<div class="sm"><b>Consigne :</b> '+esc(S.consigne.note)+'</div>':''):(v>0?'<div class="msg w show">Pas de consigne du bureau : demander les quantités avant de remplir.</div>':''));
  $('prepChkL').classList.toggle('hide',!has);$('prepChk').checked=false;}
-$('newCuve').onclick=()=>{if(!S.who){askWho();return;}selVol=null;$('volFree').value='';document.querySelectorAll('.vols button').forEach(b=>b.classList.remove('sel'));showObj();$('mCuve').classList.remove('hide');};
+$('newCuve').onclick=()=>{if(!S.who){askWho();return;}renderChSel();selVol=null;$('volFree').value='';document.querySelectorAll('.vols button').forEach(b=>b.classList.remove('sel'));showObj();$('mCuve').classList.remove('hide');};
 document.querySelectorAll('.vols button').forEach(b=>b.onclick=()=>{selVol=+b.dataset.v;$('volFree').value='';document.querySelectorAll('.vols button').forEach(x=>x.classList.toggle('sel',x===b));showObj();});
 $('volFree').oninput=()=>{selVol=null;document.querySelectorAll('.vols button').forEach(x=>x.classList.remove('sel'));showObj();};
 $('mCancel').onclick=()=>$('mCuve').classList.add('hide');
-$('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(!(v>0))return;const P=prepOf(v);if(P.L.length&&!$('prepChk').checked){msg('Coche « Cuve préparée selon la consigne » avant de démarrer.','w');say('Cochez cuve préparée avant de démarrer.');return;}
- const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now,prep:P.L,eau:P.eau,client:S.consigne.client||'',donneur:S.consigne.donneur||'',note:S.consigne.note||'',bt:S.consigne.maj||0,wx:(typeof WX!=='undefined'&&WX&&WX.current)?{v:Math.round(WX.current.wind_speed_10m),r:Math.round(WX.current.wind_gusts_10m),p:WX.current.precipitation||0}:null};S.on=false;S.paused=false;S.brk=true;
+$('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(FB.ok&&!S.chId){msg('Choisis le chantier (demande d\'intervention signée).','w');say('Choisissez le chantier.');return;}if(!(v>0))return;const P=prepOf(v);if(P.L.length&&!$('prepChk').checked){msg('Coche « Cuve préparée selon la consigne » avant de démarrer.','w');say('Cochez cuve préparée avant de démarrer.');return;}
+ const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now,prep:P.L,eau:P.eau,client:S.consigne.client||'',donneur:S.consigne.donneur||'',note:S.consigne.note||'',bt:S.consigne.maj||0,chId:S.chId||'',wx:(typeof WX!=='undefined'&&WX&&WX.current)?{v:Math.round(WX.current.wind_speed_10m),r:Math.round(WX.current.wind_gusts_10m),p:WX.current.precipitation||0}:null};S.on=false;S.paused=false;S.brk=true;
  $('mCuve').classList.add('hide');say('Cuve '+n+' : '+v+' litres, objectif '+f1(v/S.cfg.dose)+' hectares.');notif(who()+' : cuve '+n+' démarrée',v+' L à '+hm(now)+', objectif '+f1(v/S.cfg.dose)+' ha'+(P.L.length?' · '+P.L.map(x=>x.nom+' '+x.q.toLocaleString('fr-FR')+' '+x.u).join(', '):' · sans consigne')+'.','seedling',3);keepAwake();sendCuve(S.cur);renderChauf();};
 $('spray').onclick=()=>{if(S.paused)return;S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();};
 $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
@@ -515,16 +519,16 @@ $('eBack').onclick=()=>$('mEnd').classList.add('hide');
 $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
  liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Bon d\'intervention enregistré.');sendCuve(c);flushPts();
  notif(who()+' : cuve '+c.n+' terminée',hm(c.start)+' – '+hm(c.end)+' · '+f1(r.ha)+' ha pour '+f1(c.obj)+' prévus ('+(e>0?'+':'')+Math.round(e*100)+' %).','white_check_mark',3);
- const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);purgeCuve(c);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
+ const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);if(c.chId)fbSet('chantiers/'+c.chId+'/bons/'+WID()+'_'+c.id,bon);purgeCuve(c);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
 /* bon généré : on supprime du serveur les positions, la cuve et la position en direct ; seul le bon reste */
 function purgeCuve(c){if(!FB.ok)return;const m=FB.m,db=FB.db,ids=(S.ptIds||[]).slice();S.ptIds=[];save();
  try{ids.forEach(id=>m.deleteDoc(m.doc(db,'jours',S.day,'pts',id)).catch(()=>{}));m.deleteDoc(m.doc(db,'jours',S.day,'cuves',WID()+'_'+c.id)).catch(()=>{});
   m.setDoc(m.doc(db,'live',WID()),{who:S.who||'',t:Date.now(),etat:'entre deux cuves',on:0,day:S.day,uid:FB.uid,x:null,y:null,acc:null,parc:'',cuve:null}).catch(()=>{});}catch(e){}}
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
-  if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=i?NAMES[i-1]:'Hors parcelle';per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
+  if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=i&&!S.noGeo?NAMES[i-1]:(S.noGeo?'Surface tracée':'Hors parcelle');per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
  const parc=Object.entries(per).filter(x=>x[1]>=0.05&&x[0]!=='Hors parcelle').sort((a,b)=>b[1]-a[1]).map(([n,ha])=>({n,ha:Math.round(ha*100)/100}));
- return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,client:c.client||'',donneur:c.donneur||'',note:c.note||'',wx:c.wx||null,bt:c.bt||0,parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0};}
+ return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,client:c.client||'',donneur:c.donneur||'',note:c.note||'',wx:c.wx||null,bt:c.bt||0,chId:c.chId||'',parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0};}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 const FCSS='*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:10.5px;margin:0;padding:14px;background:#fff}.f{max-width:760px;margin:0 auto}.ft{border:1.5px solid #111;text-align:center;font-weight:700;font-size:12px;padding:5px;margin-bottom:6px}.g{display:grid;grid-template-columns:34% 66%;border:1.5px solid #111;border-bottom:0}.g>div{padding:6px 8px}.g>div+div{border-left:1.5px solid #111}.sh{background:#1f6b45;color:#fff;font-weight:700;padding:4px 8px;font-size:11.5px;border:1.5px solid #111;border-bottom:0}.box{border:1.5px solid #111;border-bottom:0;padding:6px 8px}.last{border-bottom:1.5px solid #111}table{width:100%;border-collapse:collapse;table-layout:auto;font-size:9.5px}td,th{border:1px solid #555;padding:2px 4px;vertical-align:top;text-align:left}td:first-child{white-space:nowrap}.nw{white-space:nowrap}th,th.n{background:#eef2ee;font-size:8.5px;white-space:normal}.n{text-align:right;white-space:nowrap}.cb{display:inline-block;width:10px;height:10px;border:1px solid #111;margin:0 3px -1px 8px;text-align:center;line-height:9px;font-size:9px}.l{color:#444}.b{font-weight:700}.c2{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}.c3{display:grid;grid-template-columns:1fr 1fr 1fr}.c3>div{padding:6px 8px;min-height:74px}.c3>div+div{border-left:1.5px solid #111}.dots{border-bottom:1px dotted #666;display:inline-block;min-width:120px}.sm{font-size:9px;color:#444}@page{size:A4;margin:10mm}';
 function btNo(c){if(!c||!c.maj)return '—';const d=new Date(c.maj);return 'BT-'+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes());}
@@ -616,6 +620,106 @@ $('consSave').onclick=()=>{const c={produits:consDraft.filter(x=>x.nom&&x.dose>0
 $('bPrint').onclick=()=>window.print();
 $('bLoginBtn').onclick=()=>{if(FB.au)bossLogin();};
 $('bOut').onclick=async e=>{e.preventDefault();try{await FB.au.signOut(FB.auth);}catch(x){}FB.ok=false;FB.boss=false;location.reload();};
+/* ======= CLIENTS · CHANTIERS · DEMANDE D'INTERVENTION · BON DU CHANTIER ======= */
+let CL={},CH={},PRESTA={nom:'',adresse:'',agrement:''},chUnsub=[],clEdit=null,chEd=null,chDraft=[];
+const dFr=s=>s?String(s).split('-').reverse().join('/'):'';
+const inp=(id,ph,v,ty)=>'<input type="'+(ty||'text')+'" id="'+id+'" placeholder="'+esc(ph)+'" value="'+esc(v==null?'':v)+'" style="font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb;width:100%;margin-bottom:6px">';
+const sel=(id,opts,v)=>'<select id="'+id+'" style="font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb;width:100%;margin-bottom:6px">'+opts.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>';
+const ETAT={demande:'Demande envoyée, en attente de signature',signee:'Demande signée : chauffeurs autorisés',termine:'Terminé'};
+function subChantiers(){chUnsub.forEach(u=>{try{u()}catch(e){}});chUnsub=[];if(!FB.ok||!FB.boss)return;const m=FB.m,db=FB.db;renderPresta();
+ chUnsub.push(m.onSnapshot(m.collection(db,'clients'),q=>{CL={};q.forEach(d=>CL[d.id]=Object.assign({id:d.id},d.data()));renderClients();renderChantiers();},e=>console.warn('clients',e)));
+ chUnsub.push(m.onSnapshot(m.collection(db,'chantiers'),q=>{CH={};q.forEach(d=>CH[d.id]=Object.assign({id:d.id},d.data()));renderChantiers();},e=>console.warn('chantiers',e)));
+ chUnsub.push(m.onSnapshot(m.doc(db,'config','presta'),d=>{if(d.exists())PRESTA=Object.assign({nom:'',adresse:'',agrement:''},d.data());renderPresta();},e=>{}));}
+function renderPresta(){$('prE').innerHTML=inp('prNom','Nom de l\'entreprise prestataire',PRESTA.nom)+inp('prAdr','Adresse',PRESTA.adresse)+inp('prAgr','N° d\'agrément',PRESTA.agrement);}
+$('prSave').onclick=async()=>{const x={nom:$('prNom').value.trim(),adresse:$('prAdr').value.trim(),agrement:$('prAgr').value.trim()};try{await FB.m.setDoc(FB.m.doc(FB.db,'config','presta'),x);msg('Prestataire enregistré.','i');}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
+function renderClients(){const L=Object.values(CL).sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
+ $('clList').innerHTML=L.length?L.map(c=>'<div class="ce" style="align-items:center"><span style="flex:1"><b>'+esc(c.nom)+'</b> · '+esc(c.lieu||'')+(c.geo==='RN'?' · parcellaire Rivière Noire':' · sans parcellaire')+'</span><button class="btn sec" data-cled="'+c.id+'" style="padding:6px 10px;width:auto">Modifier</button></div>').join(''):'Aucun client.';
+ $('clList').querySelectorAll('[data-cled]').forEach(b=>b.onclick=()=>{clEdit=b.dataset.cled;clForm();});}
+function clForm(){const c=clEdit?CL[clEdit]:{fourn:'E',rempl:'E',evpp:'E',rinc:'E',buses:true,geo:''};$('clForm').classList.remove('hide');
+ $('clF').innerHTML=inp('clNom','Nom du client (exploitation)',c.nom)+inp('clLieu','Lieu d\'intervention',c.lieu)+inp('clMail','Mail du client',c.mail,'email')+
+ '<label>Produits fournis par</label>'+sel('clFourn',[['E','l\'entreprise (prestataire)'],['C','le client']],c.fourn)+'<label>Lieu de remplissage</label>'+sel('clRempl',[['E','à l\'entreprise'],['C','chez le client']],c.rempl)+
+ '<label>Rinçage du pulvérisateur</label>'+sel('clRinc',[['E','à l\'entreprise'],['C','chez le client'],['F','au champ']],c.rinc)+'<label>Destination des EVPP</label>'+sel('clEvpp',[['E','repris par l\'entreprise'],['C','conservés par le client']],c.evpp)+
+ '<label>Buses antidérive</label>'+sel('clBuses',[['1','oui'],['0','non']],c.buses===false?'0':'1')+'<label>Parcellaire</label>'+sel('clGeo',[['','pas de parcellaire : tracé et surface seulement'],['RN','parcellaire Rivière Noire intégré']],c.geo||'');
+ $('clDel').classList.toggle('hide',!clEdit);}
+$('clNew').onclick=()=>{clEdit=null;clForm();};
+$('clCancel').onclick=()=>$('clForm').classList.add('hide');
+$('clSave').onclick=async()=>{const x={nom:$('clNom').value.trim(),lieu:$('clLieu').value.trim(),mail:$('clMail').value.trim(),fourn:$('clFourn').value,rempl:$('clRempl').value,rinc:$('clRinc').value,evpp:$('clEvpp').value,buses:$('clBuses').value==='1',geo:$('clGeo').value};if(!x.nom){msg('Nom du client obligatoire.','w');return;}
+ try{const m=FB.m;if(clEdit)await m.setDoc(m.doc(FB.db,'clients',clEdit),x);else await m.addDoc(m.collection(FB.db,'clients'),x);$('clForm').classList.add('hide');msg('Client enregistré.','i');}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
+$('clDel').onclick=async()=>{if(!clEdit||!confirm('Supprimer ce client ?'))return;try{await FB.m.deleteDoc(FB.m.doc(FB.db,'clients',clEdit));$('clForm').classList.add('hide');}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
+function renderChantiers(){const L=Object.values(CH).sort((a,b)=>(b.t||0)-(a.t||0));
+ $('chList').innerHTML=L.length?L.map(c=>{const cl=CL[c.client]||{};const late=c.etat!=='termine'&&c.ordre&&c.ordre.recu&&(Date.now()-new Date(c.ordre.recu).getTime()>5*864e5);
+  return '<div class="bon" style="margin:6px 0"><div><b>'+esc(cl.nom||c.clientNom||'?')+'</b> · '+f1(c.surface||0)+' ha · '+esc((c.produits||[]).map(p=>p.nom).join(', '))+'</div><div class="sm">Ordre '+esc((c.ordre&&c.ordre.ref)||'—')+' · prévu le '+(dFr(c.prevu)||'—')+' · <b>'+(ETAT[c.etat]||c.etat)+'</b>'+(late?' · <span class="ko">délai de 5 jours dépassé</span>':'')+'</div>'+
+  '<div class="row2" style="margin-top:6px"><button class="btn sec" data-chd="'+c.id+'" style="padding:8px;font-size:14px">Demande d\'intervention (PDF)</button>'+
+  (c.etat==='demande'?'<button class="btn" data-chs="'+c.id+'" style="padding:8px;font-size:14px">Demande signée reçue</button>':'<button class="btn" data-chb="'+c.id+'" style="padding:8px;font-size:14px">Bon d\'intervention (PDF)</button>')+'</div>'+
+  '<div class="row2" style="margin-top:6px"><button class="btn sec" data-che="'+c.id+'" style="padding:8px;font-size:14px">Modifier</button>'+(c.etat==='termine'?'<button class="btn sec" data-chr="'+c.id+'" style="padding:8px;font-size:14px">Rouvrir</button>':c.etat==='signee'?'<button class="btn sec" data-cht="'+c.id+'" style="padding:8px;font-size:14px">Clore le chantier</button>':'<button class="btn sec" data-chx="'+c.id+'" style="padding:8px;font-size:14px">Supprimer</button>')+'</div></div>';}).join(''):'Aucun chantier.';
+ const q=s=>$('chList').querySelectorAll(s);
+ q('[data-chd]').forEach(b=>b.onclick=()=>{const c=CH[b.dataset.chd],cl=CL[c.client]||{};printDoc('Demande d\'intervention '+(cl.nom||''),demandeHtml(c,cl));});
+ q('[data-chs]').forEach(b=>b.onclick=()=>chEtat(b.dataset.chs,'signee'));
+ q('[data-cht]').forEach(b=>b.onclick=()=>chEtat(b.dataset.cht,'termine'));
+ q('[data-chr]').forEach(b=>b.onclick=()=>chEtat(b.dataset.chr,'signee'));
+ q('[data-chx]').forEach(b=>b.onclick=async()=>{if(!confirm('Supprimer ce chantier ?'))return;try{await FB.m.deleteDoc(FB.m.doc(FB.db,'chantiers',b.dataset.chx));}catch(e){msg('Impossible : '+(e.code||e.message),'w');}});
+ q('[data-che]').forEach(b=>b.onclick=()=>chForm(b.dataset.che));
+ q('[data-chb]').forEach(b=>b.onclick=()=>printChantier(b.dataset.chb));}
+async function chEtat(id,e){try{await FB.m.updateDoc(FB.m.doc(FB.db,'chantiers',id),{etat:e,maj:Date.now()});}catch(x){msg('Impossible : '+(x.code||x.message),'w');}}
+function chForm(id){chEd=id||null;const c=id?CH[id]:{produits:[{nom:'',amm:'',dose:0,u:'L'}],bouillie:S.cfg.dose||50,ordre:{}};chDraft=JSON.parse(JSON.stringify(c.produits||[]));$('chForm').classList.remove('hide');
+ const cls=Object.values(CL).sort((a,b)=>(a.nom||'').localeCompare(b.nom||'')).map(x=>[x.id,x.nom]);
+ $('chF').innerHTML='<label>Client (donneur d\'ordre)</label>'+sel('chCl',[['','— choisir le client —']].concat(cls),c.client||'')+(cls.length?'':'<div class="msg w show">Crée d\'abord le client (carte Clients).</div>')+
+ '<label>Ordre de traitement SICA CERCOBAN</label>'+inp('chRef','Référence (ex. semaine 47/2026)',(c.ordre||{}).ref)+'<label>Ordre reçu le</label>'+inp('chRecu','',(c.ordre||{}).recu,'date')+
+ '<label>Surface demandée (ha)</label>'+inp('chSurf','ex. 80,79',c.surface||'','number')+'<label>Bouillie (L/ha)</label>'+inp('chBou','50',c.bouillie||'','number')+
+ '<label>Produits (dose par hectare)</label><div id="chProd"></div><button class="btn sec" id="chPAdd" style="padding:8px;margin-bottom:6px">+ Produit</button>'+
+ '<label>Date prévue</label>'+inp('chPrev','',c.prevu,'date')+'<label>Délai de rentrée</label>'+inp('chDre','ex. 6 heures',c.dre)+'<label>Délai avant récolte</label>'+inp('chDar','ex. 3 jours',c.dar)+'<label>ZNT et zones à ne pas traiter</label>'+inp('chZnt','ex. 5 m des cours d\'eau',c.znt)+'<label>Parcelles ou zone à traiter</label>'+inp('chParc','ex. toute la bananeraie',c.parcs)+'<label>Consigne du client</label>'+inp('chNote','',c.note);
+ renderChProd();$('chPAdd').onclick=()=>{readChProd();chDraft.push({nom:'',amm:'',dose:0,u:'L'});renderChProd();};$('chForm').scrollIntoView({behavior:'smooth'});}
+function readChProd(){$('chProd').querySelectorAll('[data-k]').forEach(e=>{const i=+e.dataset.i,k=e.dataset.k;if(chDraft[i])chDraft[i][k]=k==='dose'?(parseFloat(String(e.value).replace(',','.'))||0):e.value;});}
+function renderChProd(){$('chProd').innerHTML=chDraft.map((x,i)=>'<div class="ce"><input data-i="'+i+'" data-k="nom" value="'+esc(x.nom)+'" placeholder="Produit"><input data-i="'+i+'" data-k="amm" value="'+esc(x.amm||'')+'" placeholder="AMM"><input data-i="'+i+'" data-k="dose" type="number" step="any" value="'+(x.dose||'')+'" placeholder="Dose/ha"><select data-i="'+i+'" data-k="u"><option'+(x.u==='kg'?'':' selected')+'>L</option><option'+(x.u==='kg'?' selected':'')+'>kg</option></select><button class="btn sec" data-pdl="'+i+'" style="padding:8px">✕</button></div>').join('');
+ $('chProd').querySelectorAll('[data-pdl]').forEach(b=>b.onclick=()=>{readChProd();chDraft.splice(+b.dataset.pdl,1);renderChProd();});}
+$('chNew').onclick=()=>chForm(null);$('chCancel').onclick=()=>$('chForm').classList.add('hide');
+$('chSave').onclick=async()=>{readChProd();const n=x=>parseFloat(String(x).replace(',','.'))||0;const cl=CL[$('chCl').value];if(!cl){msg('Choisis le client.','w');return;}
+ const x={client:cl.id,clientNom:cl.nom,lieu:cl.lieu||'',geo:cl.geo||'',ordre:{ref:$('chRef').value.trim(),recu:$('chRecu').value},surface:n($('chSurf').value),bouillie:n($('chBou').value)||50,produits:chDraft.filter(p=>p.nom&&p.dose>0),prevu:$('chPrev').value,dre:$('chDre').value.trim(),dar:$('chDar').value.trim(),znt:$('chZnt').value.trim(),parcs:$('chParc').value.trim(),note:$('chNote').value.trim(),maj:Date.now()};
+ if(!(x.surface>0)){msg('Surface demandée obligatoire.','w');return;}if(!x.produits.length){msg('Ajoute au moins un produit avec sa dose.','w');return;}
+ try{const m=FB.m;if(chEd)await m.updateDoc(m.doc(FB.db,'chantiers',chEd),x);else{x.etat='demande';x.t=Date.now();await m.addDoc(m.collection(FB.db,'chantiers'),x);}$('chForm').classList.add('hide');msg('Chantier enregistré. Envoie la demande d\'intervention au client par mail.','i');}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
+const ckb=v=>'<span class="cb">'+(v?'✓':'')+'</span>';
+function condHtml(cl){return '<div class="c2"><div><span class="l">Produits fournis par :</span>'+ckb(cl.fourn==='C')+'le client'+ckb(cl.fourn!=='C')+'l\'entreprise</div><div><span class="l">Lieu de remplissage :</span>'+ckb(cl.rempl==='C')+'chez le client'+ckb(cl.rempl!=='C')+'à l\'entreprise</div><div><span class="l">Destination des EVPP :</span>'+ckb(cl.evpp==='C')+'conservés par le client'+ckb(cl.evpp!=='C')+'repris par l\'entreprise</div><div><span class="l">Buses antidérive :</span>'+ckb(cl.buses!==false)+'oui'+ckb(cl.buses===false)+'non</div><div><span class="l">Rinçage du pulvérisateur :</span>'+ckb(cl.rinc==='C')+'client'+ckb(!cl.rinc||cl.rinc==='E')+'entreprise'+ckb(cl.rinc==='F')+'au champ</div></div>';}
+function headHtml(t,c,cl){const P=PRESTA;return '<div class="ft">'+t+'</div><div class="g"><div><div class="b">PRESTATAIRE</div>'+(esc(P.nom)||'<span class="dots" style="min-width:160px"></span>')+'<br>'+esc(P.adresse||'')+'<br><span class="l">Application en prestation de service sous l\'agrément n°</span> '+(esc(P.agrement)||'<span class="dots"></span>')+'</div><div><div class="b">CLIENT — DONNEUR D\'ORDRE</div><b>'+esc(cl.nom||c.clientNom||'')+'</b><br>'+esc(cl.lieu||c.lieu||'')+(cl.mail?'<br>'+esc(cl.mail):'')+'<br><span class="l">Ordre SICA CERCOBAN :</span> '+esc((c.ordre||{}).ref||'—')+((c.ordre||{}).recu?' (reçu le '+dFr(c.ordre.recu)+')':'')+'</div></div>';}
+function demandeHtml(c,cl){const tb=(c.surface||0)*(c.bouillie||50);
+ return '<div class="f">'+headHtml('DEMANDE D\'INTERVENTION — TRAITEMENT TERRESTRE CONTRE LES CERCOSPORIOSES EN PRESTATION DE SERVICE',c,cl)+
+ '<div class="sh">1 · INTERVENTION DEMANDÉE</div><div class="box"><span class="l">Nature :</span> '+ckb(1)+'pulvérisation fongicide au canon · <span class="l">Date prévue :</span> <b>'+(dFr(c.prevu)||'—')+'</b> · <span class="l">Zone :</span> '+esc(c.parcs||'—')+'<br>Application à réaliser dans les 5 jours suivant la réception de l\'ordre de traitement.</div>'+
+ '<div class="sh">2 · TRAITEMENT</div><div class="box"><table><tr><th>Produit</th><th>AMM</th><th class="n">Dose/ha</th><th class="n">Quantité totale</th></tr>'+
+ (c.produits||[]).map(p=>'<tr><td>'+esc(p.nom)+'</td><td>'+esc(p.amm||'')+'</td><td class="n">'+p.dose.toLocaleString('fr-FR')+' '+p.u+'/ha</td><td class="n">'+(Math.round(p.dose*(c.surface||0)*100)/100).toLocaleString('fr-FR')+' '+p.u+'</td></tr>').join('')+
+ '<tr><th>Surface à traiter</th><th colspan="3" class="n">'+f1(c.surface||0)+' ha · bouillie '+(c.bouillie||50)+' L/ha, soit '+f0(tb)+' L (environ '+(Math.round(tb/800*10)/10).toLocaleString('fr-FR')+' cuves de 800 L)</th></tr></table></div>'+
+ '<div class="sh">3 · CONSIGNES À RESPECTER</div><div class="box">'+condHtml(cl)+
+ '<ul style="margin:6px 0 0 16px;padding:0"><li>Météo : vent inférieur ou égal à 19 km/h, pas de pluie annoncée dans les 2 heures.</li><li>ZNT : '+esc(c.znt||'selon l\'étiquette des produits')+'.</li><li>Délai de rentrée : '+esc(c.dre||'selon l\'étiquette')+' · délai avant récolte : '+esc(c.dar||'selon l\'étiquette')+'.</li><li>EPI conformes aux fiches de données de sécurité ; arrêtés du 4 mai 2017 et du 27 novembre 2019.</li><li>'+ckb(1)+'Le client a reçu l\'information sur les méthodes alternatives (élimination hebdomadaire des feuilles nécrosées).</li>'+(c.note?'<li>Consigne du client : '+esc(c.note)+'</li>':'')+'</ul></div>'+
+ '<div class="sh">4 · SUIVI ET DONNÉES</div><div class="box">L\'application est suivie par GPS. Les positions sont hébergées temporairement en Europe pendant l\'intervention, puis supprimées dès que le bon d\'intervention est généré. Seul le bon d\'intervention est conservé ; il est envoyé par mail au client après la prestation.</div>'+
+ '<div class="sh">5 · ACCORD</div><div class="box last" style="padding:0"><div class="c2" style="min-height:95px"><div style="padding:6px">Bon pour accord — le client (donneur d\'ordre)<br>Nom, date et signature :</div><div style="padding:6px">Le prestataire'+(PRESTA.nom?' — '+esc(PRESTA.nom):'')+'<br>Date et signature :</div></div></div>'+
+ '<div class="sm" style="margin-top:4px">À retourner signée par mail au prestataire. Sans demande signée, aucune intervention.</div></div>';}
+async function printChantier(id){const c=CH[id],cl=CL[c.client]||{};const B=[];try{const q=await FB.m.getDocs(FB.m.collection(FB.db,'chantiers',id,'bons'));q.forEach(d=>B.push(d.data()));}catch(e){msg('Lecture des bons impossible : '+(e.code||e.message),'w');return;}
+ if(!B.length){msg('Aucune cuve enregistrée pour ce chantier.','w');return;}printDoc('Bon d\'intervention '+(cl.nom||''),bonChHtml(c,cl,B));}
+function bonChHtml(c,cl,B){B.sort((a,b)=>a.start-b.start);
+ const per={};B.forEach(b=>(b.parc||[]).forEach(x=>{if(x.n!=='Hors parcelle')per[x.n]=(per[x.n]||0)+x.ha;}));
+ const haT=Math.round(Object.values(per).reduce((a,x)=>a+x,0)*100)/100,vol=B.reduce((a,b)=>a+(b.vol||0),0);
+ const q={};B.forEach(b=>(b.prep||[]).forEach(p=>{const k=p.nom+'|'+p.u;q[k]=(q[k]||0)+p.q;}));
+ const pc=(r,ref)=>ref?Math.round((r-ref)/ref*100):null,pf=v=>v==null?'—':(v>0?'+':'')+v+' %';
+ const eS=pc(haT,c.surface),eB=haT?pc(vol/haT,c.bouillie||50):null;
+ const PL=(c.produits||[]).map(p=>{const tq=q[p.nom+'|'+p.u]||0,d=haT?tq/haT:0;return {p,tq,d,e:tq?pc(d,p.dose):null};});
+ const ok=[eS,eB].concat(PL.map(x=>x.e)).every(v=>v==null||Math.abs(v)<=10);
+ const who=[...new Set(B.map(b=>b.who))].join(', '),days=[...new Set(B.map(b=>b.day))].map(dFr).join(', '),wx=B[0].wx;
+ const rows=Object.entries(per).sort((a,b)=>b[1]-a[1]).map(([n,ha])=>'<tr><td>'+esc(n)+'</td><td class="n">'+(c.geo==='RN'?surfOf(n):'')+'</td><td class="n">'+f1(ha)+' ha</td></tr>').join('');
+ return '<div class="f">'+headHtml('BON D\'INTERVENTION — FICHE DE CHANTIER : APPLICATION DE PRODUITS PHYTOPHARMACEUTIQUES EN PRESTATION DE SERVICE',c,cl)+
+ '<div class="sh">1 · SURFACES TRAITÉES</div><div class="box"><table><tr><th>Parcelle</th><th class="n">Surface parcelle</th><th class="n">Surface traitée</th></tr>'+rows+'<tr><th>Total</th><th class="n">'+f1(c.surface||0)+' ha demandés</th><th class="n">'+f1(haT)+' ha</th></tr></table><div class="sm" style="margin-top:3px">'+(c.geo==='RN'?'Surfaces mesurées par GPS, canon en marche ; manœuvres hors parcelle non comptées.':'Sans parcellaire : surface = distance parcourue canon en marche × largeur de traitement.')+' Matériel : canon · '+B.length+' cuve(s) · '+f0(vol)+' L de bouillie.</div></div>'+
+ '<div class="sh">2 · PRODUITS APPLIQUÉS</div><div class="box"><table><tr><th>Produit</th><th>AMM</th><th class="n">Dose demandée</th><th class="n">Quantité appliquée</th><th class="n">Dose réelle</th><th class="n">Écart</th></tr>'+
+ PL.map(x=>'<tr><td>'+esc(x.p.nom)+'</td><td>'+esc(x.p.amm||'')+'</td><td class="n">'+x.p.dose.toLocaleString('fr-FR')+' '+x.p.u+'/ha</td><td class="n">'+(Math.round(x.tq*100)/100).toLocaleString('fr-FR')+' '+x.p.u+'</td><td class="n">'+(x.tq?(Math.round(x.d*100)/100).toLocaleString('fr-FR')+' '+x.p.u+'/ha':'—')+'</td><td class="n">'+pf(x.e)+'</td></tr>').join('')+'</table><div style="margin-top:6px">'+condHtml(cl)+'</div></div>'+
+ '<div class="sh">3 · CONTRÔLE DE FIN DE CHANTIER (tolérance ± 10 %)</div><div class="box"><table><tr><th>Contrôle</th><th class="n">Demandé</th><th class="n">Réalisé</th><th class="n">Écart</th></tr><tr><td>Surface traitée</td><td class="n">'+f1(c.surface||0)+' ha</td><td class="n">'+f1(haT)+' ha</td><td class="n">'+pf(eS)+'</td></tr><tr><td>Bouillie</td><td class="n">'+(c.bouillie||50)+' L/ha</td><td class="n">'+(haT?f0(vol/haT)+' L/ha':'—')+'</td><td class="n">'+pf(eB)+'</td></tr></table>'+
+ '<div style="margin-top:5px"><span class="l">Consignes d\'exécution respectées :</span>'+ckb(ok)+'en totalité'+ckb(!ok)+'partiellement · <span class="l">Problème rencontré :</span> <span class="dots" style="min-width:140px"></span></div>'+(wx?'<div class="sm">Météo au départ : vent '+wx.v+' km/h, rafales '+wx.r+' km/h, pluie '+(Math.round((wx.p||0)*10)/10)+' mm.</div>':'')+'</div>'+
+ '<div class="sh">4 · CONSIGNES DE SÉCURITÉ POUR LE CLIENT — VALIDATION</div><div class="box last" style="padding:0"><div class="c3"><div><span class="l">Date(s) d\'intervention :</span> <b>'+days+'</b><br>'+hm(B[0].start)+' – '+hm(B[B.length-1].end)+'<br>Délai de rentrée : '+esc(c.dre||'')+'<br>Délai avant récolte : '+esc(c.dar||'')+'<br>Zones non traitées : '+esc(c.znt||'')+'</div><div>Opérateur(s)<br><b>'+esc(who)+'</b><br>Date et signature</div><div>Validé par le décideur (client)<br>Enregistrement du chantier complété :'+ckb(1)+'oui'+ckb(0)+'non<br><br>Signature</div></div></div>'+
+ '<div class="sm" style="text-align:right;margin-top:3px">Bon généré par l\'application Traitement Cerco. Les positions GPS ont été supprimées du serveur.</div></div>';}
+/* côté chauffeur : chantiers signés */
+let CHD={};
+fbHooks.push(()=>{try{const m=FB.m;m.onSnapshot(m.query(m.collection(FB.db,'chantiers'),m.where('etat','==','signee')),q=>{CHD={};q.forEach(d=>CHD[d.id]=Object.assign({id:d.id},d.data()));renderChSel();},e=>console.warn('chantiers',e));}catch(e){}});
+function renderChSel(){if(!$('chSel'))return;const L=Object.values(CHD);if(S.chId&&FB.ok&&!CHD[S.chId]){S.chId='';S.noGeo=false;save();}
+ $('chSel').innerHTML=L.length?'<div class="sm">Chantier :</div><select id="chPick" style="font-size:17px;padding:10px;border-radius:10px;border:1px solid #bbb;width:100%;margin-bottom:8px"><option value="">— choisir le chantier —</option>'+L.map(c=>'<option value="'+c.id+'"'+(S.chId===c.id?' selected':'')+'>'+esc(c.clientNom||'')+' · '+f1(c.surface||0)+' ha'+((c.ordre||{}).ref?' · '+esc(c.ordre.ref):'')+'</option>').join('')+'</select>':(FB.ok?'<div class="msg w show" style="margin:6px 0">Aucun chantier ouvert : le bureau doit d\'abord recevoir la demande d\'intervention signée.</div>':'');
+ const p=$('chPick');if(p)p.onchange=()=>{pickCh(p.value);showObj();};$('chFin').classList.toggle('hide',!S.chId);}
+function pickCh(id){const c=CHD[id];S.chId=c?id:'';S.noGeo=c?c.geo!=='RN':false;if(c){S.consigne={produits:c.produits||[],client:c.clientNom||'',note:c.note||'',maj:c.maj||0};if(c.bouillie)S.cfg.dose=c.bouillie;}save();}
+$('chFin').onclick=async()=>{if(!S.chId)return;if(S.cur){msg('Termine d\'abord la cuve en cours.','w');return;}if(!confirm('Le chantier est terminé ? Le bon d\'intervention part au bureau.'))return;
+ try{await FB.m.updateDoc(FB.m.doc(FB.db,'chantiers',S.chId),{etat:'termine',fin:Date.now()});S.chId='';S.noGeo=false;save();renderChSel();msg('Chantier terminé : bon d\'intervention transmis au bureau.','i');say('Chantier terminé.');}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
 /* accès : code chauffeurs, téléphones, prestataires */
 async function renderAcc(){if(!FB.ok||!FB.boss)return;const m=FB.m,db=FB.db;$('accAdm').classList.toggle('hide',!FB.admin);
  try{const d=await m.getDoc(m.doc(db,'acces','code'));const M=await m.getDocs(m.collection(db,'membres'));$('accInfo').textContent=(d.exists()?'Code en service : '+d.data().code:'Code initial en service.')+' · '+M.size+' téléphone(s) relié(s).';}catch(e){$('accInfo').textContent='Lecture impossible : '+(e.code||e.message);}
@@ -639,7 +743,7 @@ $('tChauf').onclick=()=>showTab('c');$('tBur').onclick=()=>showTab('b');
 function startBureau(){
  const isB=FB.boss;$('bLogin').classList.toggle('hide',!!isB);$('bBody').classList.toggle('hide',!isB);
  if(!isB){$('bLoginBtn').disabled=!FB.au;$('bLoginMsg').textContent=FB.au?'':'Connexion au serveur en cours…';return;}
- $('bWho').textContent=FB.email+(FB.admin?' (administrateur)':' (prestataire)');purgeOld();renderAcc();
+ $('bWho').textContent=FB.email+(FB.admin?' (administrateur)':' (prestataire)');purgeOld();renderAcc();subChantiers();
  if(!M2){$('mapc2').innerHTML='<div id="mapc" style="height:55vh"><canvas id="map2" style="width:100%;height:100%;display:block"></canvas><div class="mb"><button id="z2In">+</button><button id="z2Out">−</button><button id="f2">◎</button></div></div>';
   M2=new MapView($('map2'));M2.followBtn=$('f2');M2.setFollow(false);M2.larg=S.cfg.larg;
   $('z2In').onclick=()=>M2.zoom(1.4);$('z2Out').onclick=()=>M2.zoom(1/1.4);$('f2').onclick=()=>{M2.setFollow(!M2.follow);if(!M2.follow)M2.fit();M2.draw();};
@@ -728,7 +832,7 @@ if(location.hash==='#bureau')t0='b';if(location.hash==='#chauffeur')t0='c';
 renderChauf();showTab(t0);
 initFB();
 window.addEventListener('online',()=>flushPts());
-window.__cerco={S,addPoint,NAMES,toXY,FB};fbHooks.push(()=>{if(!$('vBur').classList.contains('hide'))startBureau();});
+window.__cerco={S,addPoint,NAMES,toXY,FB,onFB};fbHooks.push(()=>{if(!$('vBur').classList.contains('hide'))startBureau();});
 })();
 </script>
 </body>
