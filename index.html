@@ -129,7 +129,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
 </section>
 
 <section id="vBur" class="hide">
- <div class="card login hide" id="bLogin"><h2>Accès bureau</h2><p>Réservé au responsable. Connecte-toi avec ton compte Google.</p><button class="btn" id="bLoginBtn">Se connecter avec Google</button><div class="sm" id="bLoginMsg" style="margin-top:10px"></div></div>
+ <div class="card login hide" id="bLogin"><h2>Accès bureau</h2><p>Réservé au prestataire et à l'administrateur. Connecte-toi avec ton compte Google.</p><button class="btn" id="bLoginBtn">Se connecter avec Google</button><div class="sm" id="bLoginMsg" style="margin-top:10px"></div></div>
  <div id="bBody">
  <div class="card"><div class="row2" style="margin:0"><input type="date" id="bDay"><button class="btn sec" id="bToday" style="padding:10px">Aujourd'hui</button></div><div class="sm" id="bLive" style="margin-top:8px">—</div></div>
  <div class="card wx" id="wx2"><div class="wxh"><h2 style="margin:0">Météo</h2><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:14px">Vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:14px">Pluie (Windy)</button></div></div>
@@ -137,9 +137,10 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
  <div style="height:8px"></div>
  <div id="mapc2"></div>
  <div class="card noprint" style="margin-top:8px"><h2>Consigne de préparation des cuves</h2><div class="sm">Dose par hectare de chaque produit. Le chauffeur voit les quantités à mettre selon le volume de sa cuve (bouillie à <span id="cDoseTxt">50</span> L/ha).</div><div style="height:8px"></div><div id="consEdit"></div><div class="row2"><button class="btn sec" id="consAdd" style="padding:10px">+ Produit</button><button class="btn" id="consSave" style="padding:10px">Envoyer aux chauffeurs</button></div><div class="sm" id="consInfo"></div></div>
- <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Bons d'intervention</h2><button class="btn sec noprint" id="bPrint" style="width:auto;padding:8px 14px;font-size:15px">Imprimer</button></div><div class="sm" style="margin:6px 0 10px">Statut des parcelles sur le tour en cours (<span id="tourTxt">10</span> derniers jours, tous chauffeurs).</div><div id="bBons" class="sm">—</div></div>
+ <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Bons d'intervention</h2><button class="btn sec noprint" id="bPrint" style="width:auto;padding:8px 14px;font-size:15px">Imprimer</button></div><div class="sm" style="margin:6px 0 10px">Bons générés par les chauffeurs. Les traces GPS sont supprimées du serveur dès qu'un bon est généré.<span id="tourTxt" class="hide"></span></div><div id="bBons" class="sm">—</div></div>
  <div class="card noprint" style="margin-top:8px"><h2>Cuves</h2><div id="bCuves" class="sm">—</div></div>
  <div class="card"><h2>Parcelles</h2><div id="bParc" class="sm">—</div></div>
+ <div class="card noprint" id="accCard"><h2>Accès</h2><div class="sm">Code des chauffeurs : seuls les téléphones qui ont saisi ce code envoient leur position. Changer le code n'exclut pas les téléphones déjà reliés : utilise « Retirer tous les téléphones ».</div><div class="row2" style="margin-top:8px"><input type="text" id="accCode" placeholder="Nouveau code" style="font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb"><button class="btn" id="accCodeOk" style="padding:10px">Enregistrer le code</button></div><div class="sm" id="accInfo" style="margin:6px 0"></div><button class="btn sec" id="accRaz" style="padding:10px">Retirer tous les téléphones</button><div id="accAdm" class="hide" style="margin-top:12px"><h2>Prestataires (administrateur)</h2><div class="sm">Comptes Google qui ont l'accès bureau.</div><div id="accList" class="sm" style="margin:6px 0"></div><div class="row2"><input type="email" id="accMail" placeholder="adresse Google du prestataire" style="font-size:16px;padding:8px;border-radius:8px;border:1px solid #bbb"><button class="btn" id="accAdd" style="padding:10px">Donner l'accès</button></div></div><div class="sm" style="margin-top:10px">Données : les positions GPS sont hébergées temporairement en Europe pendant l'intervention, puis supprimées dès que le bon d'intervention est généré. Seuls les bons sont conservés.</div></div>
  <div class="sm noprint" style="text-align:center;margin:4px 0 12px">Connecté : <span id="bWho">—</span> · <a href="#" id="bOut">se déconnecter</a></div>
  </div>
 </section>
@@ -219,7 +220,7 @@ const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85,ventMax:19,pluieH:2,tour
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
 S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;S.bons=[];}
+function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;S.bons=[];S.ptIds=[];}
 if(S.day!==dayOf(Date.now()))newDay();
 if(!S.bons)S.bons=[];if(!S.consigne)S.consigne={produits:[],maj:0};
 let POCHE=false;
@@ -352,7 +353,9 @@ async function initFB(){
  }catch(e){console.error(e);$('netTxt').textContent='Erreur réseau';$('netDot').className='dot off';$('fbInfo').textContent='Erreur de liaison : '+(e.message||e);}
 }
 async function afterLogin(){
- const u=FB.auth.currentUser;FB.uid=u.uid;FB.email=u.email||'';FB.boss=!!(u.email&&u.email.toLowerCase()===BOSS&&u.emailVerified);
+ const u=FB.auth.currentUser;FB.uid=u.uid;FB.email=u.email||'';FB.admin=!!(u.email&&u.email.toLowerCase()===BOSS&&u.emailVerified);FB.presta=false;
+ if(!FB.admin&&u.email&&u.emailVerified){try{const d=await FB.m.getDoc(FB.m.doc(FB.db,'prestas',u.email.toLowerCase()));FB.presta=d.exists();}catch(e){}}
+ FB.boss=FB.admin||FB.presta;
  if(!FB.boss){
   let ok=!!S.member;
   try{const d=await FB.m.getDoc(FB.m.doc(FB.db,'membres',FB.uid));ok=d.exists();}catch(e){}
@@ -360,13 +363,13 @@ async function afterLogin(){
   S.member=true;save();
  }
  FB.ok=true;$('netTxt').textContent=FB.boss?'Bureau connecté':'Relié au bureau';$('netDot').className='dot on';
- $('fbInfo').textContent=FB.boss?'Connecté en responsable ('+FB.email+').':'Téléphone autorisé.';
+ $('fbInfo').textContent=FB.boss?'Connecté en '+(FB.admin?'administrateur':'prestataire')+' ('+FB.email+').':'Téléphone autorisé.';
  onFB();
 }
 $('codeOk').onclick=async()=>{const c=$('codeIn').value.trim();if(!c)return;$('codeErr').textContent='';
  try{await FB.m.setDoc(FB.m.doc(FB.db,'membres',FB.uid),{code:c,who:S.who||'',t:Date.now()});$('mCode').classList.add('hide');$('codeIn').value='';await afterLogin();}
  catch(e){$('codeErr').textContent=(e&&e.code==='permission-denied')?'Code incorrect.':'Pas de réseau : réessaie.';}};
-async function bossLogin(){const au=FB.au;const p=new au.GoogleAuthProvider();p.setCustomParameters({login_hint:BOSS});
+async function bossLogin(){const au=FB.au;const p=new au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
  try{await au.signInWithPopup(FB.auth,p);}catch(e){if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){await au.signInWithRedirect(FB.auth,p);return;}$('bLoginMsg').textContent='Connexion impossible : '+(e.code||e.message||e);return;}
  FB.ok=false;await afterLogin();startBureau();}
 let fbHooks=[];function onFB(){fbHooks.forEach(f=>f());}
@@ -471,10 +474,10 @@ function liveSend(p){
 function flushPts(){
  if(!FB.ok)return;ptsT=Date.now();const n=S.pts.length;if((S.sent||0)>=n)return;
  const chunk=S.pts.slice(S.sent||0,n);const id=WID()+'_'+chunk[0][0];
- fbSet('jours/'+S.day+'/pts/'+id,{who:S.who||'',p:JSON.stringify(chunk),n:chunk.length});S.sent=n;save();
+ fbSet('jours/'+S.day+'/pts/'+id,{who:S.who||'',p:JSON.stringify(chunk),n:chunk.length});(S.ptIds=S.ptIds||[]).push(id);S.sent=n;save();
 }
 function sendCuve(c){const r=cuveStats(c);fbSet('jours/'+S.day+'/cuves/'+WID()+'_'+c.id,{who:S.who||'',n:c.n,vol:c.vol,obj:c.obj,start:c.start,end:c.end||null,ha:r.ha,dose:S.cfg.dose,larg:S.cfg.larg,side:S.cfg.side});fbSet('jours/'+S.day,{maj:Date.now()});}
-fbHooks.push(()=>{S.cuves.forEach(sendCuve);if(S.cur)sendCuve(S.cur);flushPts();(S.bons||[]).forEach(b=>fbSet('jours/'+b.day+'/bons/'+WID()+'_'+b.day+'_'+b.n+'_'+b.start,b));
+fbHooks.push(()=>{if(S.cur)sendCuve(S.cur);flushPts();(S.bons||[]).forEach(b=>fbSet('jours/'+b.day+'/bons/'+WID()+'_'+b.day+'_'+b.n+'_'+b.start,b));
  try{FB.m.onSnapshot(FB.m.doc(FB.db,'config','consigne'),d=>{const x=d.data();if(x&&x.produits){S.consigne=x;save();if(!$('mCuve').classList.contains('hide'))showObj();renderCons();}});}catch(e){}});
 
 /* GPS */
@@ -512,7 +515,11 @@ $('eBack').onclick=()=>$('mEnd').classList.add('hide');
 $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
  liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Bon d\'intervention enregistré.');sendCuve(c);flushPts();
  notif(who()+' : cuve '+c.n+' terminée',hm(c.start)+' – '+hm(c.end)+' · '+f1(r.ha)+' ha pour '+f1(c.obj)+' prévus ('+(e>0?'+':'')+Math.round(e*100)+' %).','white_check_mark',3);
- const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
+ const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);purgeCuve(c);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
+/* bon généré : on supprime du serveur les positions, la cuve et la position en direct ; seul le bon reste */
+function purgeCuve(c){if(!FB.ok)return;const m=FB.m,db=FB.db,ids=(S.ptIds||[]).slice();S.ptIds=[];save();
+ try{ids.forEach(id=>m.deleteDoc(m.doc(db,'jours',S.day,'pts',id)).catch(()=>{}));m.deleteDoc(m.doc(db,'jours',S.day,'cuves',WID()+'_'+c.id)).catch(()=>{});
+  m.setDoc(m.doc(db,'live',WID()),{who:S.who||'',t:Date.now(),etat:'entre deux cuves',on:0,day:S.day,uid:FB.uid,x:null,y:null,acc:null,parc:'',cuve:null}).catch(()=>{});}catch(e){}}
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
   if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=i?NAMES[i-1]:'Hors parcelle';per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
@@ -596,7 +603,7 @@ async function tourStatus(){const N=Math.max(1,Math.round(S.cfg.tour||10));$('to
  const ST={};for(let i=1;i<=NAMES.length;i++){if(cov.n[i]>0){const pc=Math.round(100*cov.n[i]/tot[i]);ST[NAMES[i-1]]={pc,fini:pc>=S.cfg.seuil};}}
  tourCache={key,ST};return ST;}
 async function renderBons(){const L=Object.values(bBons).sort((a,b)=>a.start-b.start);if(!L.length){$('bBons').innerHTML='Aucun bon pour cette journée.';return;}
- let ST=null;if(FB.ok&&FB.boss){try{ST=await tourStatus();}catch(e){}}
+ let ST=null;
  $('bBons').innerHTML=L.map(b=>bonHtml(b,ST||undefined)).join('');$('bBons').querySelectorAll('.pb1').forEach((x,i)=>x.onclick=()=>printBon(L[i],ST||undefined));}
 let consDraft=null,consMeta=null;
 function renderCons(){if(!$('consEdit'))return;if($('consClient'))consMeta={client:$('consClient').value,donneur:'',parcs:($('consParcs')||{}).value||'',periode:($('consPer')||{}).value||''};const CM=consMeta||S.consigne||{};$('cDoseTxt').textContent=S.cfg.dose;if(!consDraft)consDraft=JSON.parse(JSON.stringify(S.consigne.produits||[]));
@@ -609,11 +616,19 @@ $('consSave').onclick=()=>{const c={produits:consDraft.filter(x=>x.nom&&x.dose>0
 $('bPrint').onclick=()=>window.print();
 $('bLoginBtn').onclick=()=>{if(FB.au)bossLogin();};
 $('bOut').onclick=async e=>{e.preventDefault();try{await FB.au.signOut(FB.auth);}catch(x){}FB.ok=false;FB.boss=false;location.reload();};
-/* purge RGPD : traces GPS de plus de 60 jours, une fois par jour, par le bureau */
+/* accès : code chauffeurs, téléphones, prestataires */
+async function renderAcc(){if(!FB.ok||!FB.boss)return;const m=FB.m,db=FB.db;$('accAdm').classList.toggle('hide',!FB.admin);
+ try{const d=await m.getDoc(m.doc(db,'acces','code'));const M=await m.getDocs(m.collection(db,'membres'));$('accInfo').textContent=(d.exists()?'Code en service : '+d.data().code:'Code initial en service.')+' · '+M.size+' téléphone(s) relié(s).';}catch(e){$('accInfo').textContent='Lecture impossible : '+(e.code||e.message);}
+ if(FB.admin){try{const P=await m.getDocs(m.collection(db,'prestas'));$('accList').innerHTML=P.size?P.docs.map(x=>'<div class="ce" style="align-items:center"><span style="flex:1">'+esc(x.id)+'</span><button class="btn sec" data-pdel="'+esc(x.id)+'" style="padding:6px 10px;width:auto">Retirer</button></div>').join(''):'Aucun prestataire.';
+  $('accList').querySelectorAll('[data-pdel]').forEach(b=>b.onclick=async()=>{if(!confirm('Retirer l\'accès bureau de '+b.dataset.pdel+' ?'))return;await m.deleteDoc(m.doc(db,'prestas',b.dataset.pdel));renderAcc();});}catch(e){$('accList').textContent='Lecture impossible.';}}}
+$('accCodeOk').onclick=async()=>{const c=$('accCode').value.trim();if(c.length<4){msg('Code trop court (4 caractères minimum).','w');return;}try{await FB.m.setDoc(FB.m.doc(FB.db,'acces','code'),{code:c,maj:Date.now()});$('accCode').value='';msg('Nouveau code enregistré.','i');renderAcc();}catch(e){msg('Enregistrement impossible : '+(e.code||e.message),'w');}};
+$('accRaz').onclick=async()=>{if(!confirm('Retirer l\'accès de tous les téléphones chauffeurs ? Ils devront saisir le code à nouveau.'))return;try{const M=await FB.m.getDocs(FB.m.collection(FB.db,'membres'));for(const d of M.docs)await FB.m.deleteDoc(d.ref);msg(M.size+' téléphone(s) retiré(s).','i');renderAcc();}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
+$('accAdd').onclick=async()=>{const e=$('accMail').value.trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){msg('Adresse invalide.','w');return;}try{await FB.m.setDoc(FB.m.doc(FB.db,'prestas',e),{t:Date.now()});$('accMail').value='';msg('Accès bureau donné à '+e+'.','i');renderAcc();}catch(x){msg('Impossible : '+(x.code||x.message),'w');}};
+/* purge : restes de positions (téléphone resté hors ligne) de plus de 2 jours, positions en direct de plus d'1 jour */
 async function purgeOld(){try{const k='cerco_purge';if(localStorage.getItem(k)===dayOf(Date.now()))return;localStorage.setItem(k,dayOf(Date.now()));
- const m=FB.m,db=FB.db,lim=dayOf(Date.now()-60*864e5);const J=await m.getDocs(m.collection(db,'jours'));
- for(const d of J.docs){if(d.id>=lim)continue;const P=await m.getDocs(m.collection(db,'jours',d.id,'pts'));for(const p of P.docs)await m.deleteDoc(p.ref);}
- const L=await m.getDocs(m.collection(db,'live'));for(const d of L.docs){const x=d.data();if(!x.t||Date.now()-x.t>7*864e5)await m.deleteDoc(d.ref);}
+ const m=FB.m,db=FB.db,lim=dayOf(Date.now()-2*864e5);const J=await m.getDocs(m.collection(db,'jours'));
+ for(const d of J.docs){if(d.id>=lim)continue;const P=await m.getDocs(m.collection(db,'jours',d.id,'pts'));for(const p of P.docs)await m.deleteDoc(p.ref);const C=await m.getDocs(m.collection(db,'jours',d.id,'cuves'));for(const p of C.docs)await m.deleteDoc(p.ref);}
+ const L=await m.getDocs(m.collection(db,'live'));for(const d of L.docs){const x=d.data();if(!x.t||Date.now()-x.t>864e5)await m.deleteDoc(d.ref);}
 }catch(e){console.warn('purge',e);}}
 const COLS=['#0b3d20','#1e5bd8','#c0392b','#8e44ad','#d35400','#16a085'];
 function showTab(t){$('tChauf').classList.toggle('on',t==='c');$('tBur').classList.toggle('on',t==='b');$('vChauf').classList.toggle('hide',t!=='c');$('vBur').classList.toggle('hide',t!=='b');
@@ -624,7 +639,7 @@ $('tChauf').onclick=()=>showTab('c');$('tBur').onclick=()=>showTab('b');
 function startBureau(){
  const isB=FB.boss;$('bLogin').classList.toggle('hide',!!isB);$('bBody').classList.toggle('hide',!isB);
  if(!isB){$('bLoginBtn').disabled=!FB.au;$('bLoginMsg').textContent=FB.au?'':'Connexion au serveur en cours…';return;}
- $('bWho').textContent=FB.email;purgeOld();
+ $('bWho').textContent=FB.email+(FB.admin?' (administrateur)':' (prestataire)');purgeOld();renderAcc();
  if(!M2){$('mapc2').innerHTML='<div id="mapc" style="height:55vh"><canvas id="map2" style="width:100%;height:100%;display:block"></canvas><div class="mb"><button id="z2In">+</button><button id="z2Out">−</button><button id="f2">◎</button></div></div>';
   M2=new MapView($('map2'));M2.followBtn=$('f2');M2.setFollow(false);M2.larg=S.cfg.larg;
   $('z2In').onclick=()=>M2.zoom(1.4);$('z2Out').onclick=()=>M2.zoom(1/1.4);$('f2').onclick=()=>{M2.setFollow(!M2.follow);if(!M2.follow)M2.fit();M2.draw();};
