@@ -364,7 +364,7 @@ async function afterLogin(){
  if(!FB.boss){
   let ok=!!S.member;
   try{const d=await FB.m.getDoc(FB.m.doc(FB.db,'membres',FB.uid));ok=d.exists();}catch(e){}
-  if(!ok){S.member=false;save();$('netTxt').textContent='Code requis';$('netDot').className='dot off';$('mCode').classList.remove('hide');return;}
+  if(!ok){S.member=false;save();$('netTxt').textContent='Code requis';$('netDot').className='dot off';if(!(/bureau/.test(location.hash)||!$('vBur').classList.contains('hide'))){$('mWho').classList.add('hide');$('mCode').classList.remove('hide');}return;}
   S.member=true;save();
  }
  FB.ok=true;$('netTxt').textContent=FB.boss?'Bureau connecté':'Relié au bureau';$('netDot').className='dot on';
@@ -372,7 +372,7 @@ async function afterLogin(){
  onFB();
 }
 $('codeOk').onclick=async()=>{const c=$('codeIn').value.trim();if(!c)return;$('codeErr').textContent='';
- try{await FB.m.setDoc(FB.m.doc(FB.db,'membres',FB.uid),{code:c,who:S.who||'',t:Date.now()});$('mCode').classList.add('hide');$('codeIn').value='';await afterLogin();}
+ try{await FB.m.setDoc(FB.m.doc(FB.db,'membres',FB.uid),{code:c,who:S.who||'',t:Date.now()});$('mCode').classList.add('hide');$('codeIn').value='';await afterLogin();if(!S.who)askWho();}
  catch(e){$('codeErr').textContent=(e&&e.code==='permission-denied')?'Code incorrect.':'Pas de réseau : réessaie.';}};
 $('codeBoss').onclick=()=>{$('mCode').classList.add('hide');showTab('b');if(FB.au)bossLogin();};
 async function bossLogin(){const au=FB.au;const p=new au.GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});
@@ -593,7 +593,7 @@ $('zIn').onclick=()=>{M1.setFollow(false);M1.zoom(1.4)};$('zOut').onclick=()=>{M
 /* réglages */
 [['cDose','dose'],['cLarg','larg'],['cAcc','acc'],['cSeuil','seuil'],['cVent','ventMax'],['cPluie','pluieH'],['cTour','tour']].forEach(([id,k])=>{const e=$(id);e.value=S.cfg[k];e.onchange=()=>{const v=parseFloat(e.value);if(v>0){S.cfg[k]=v;M1.larg=S.cfg.larg;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();}};});
 $('cSide').value=S.cfg.side;$('cSide').onchange=()=>{S.cfg.side=$('cSide').value;built=build(S.pts,S.cfg);M1.setCov(built.cov);renderChauf();M1.draw();};
-function askWho(){$('whoIn').value=S.who||'';$('mWho').classList.remove('hide');setTimeout(()=>$('whoIn').focus(),100);}
+function askWho(){if(!$('mCode').classList.contains('hide'))return;$('whoIn').value=S.who||'';$('mWho').classList.remove('hide');setTimeout(()=>$('whoIn').focus(),100);}
 $('whoOk').onclick=()=>{const v=$('whoIn').value.trim();if(!v)return;S.who=v;save();$('mWho').classList.add('hide');showWho();if(S.cur)sendCuve(S.cur);};
 $('cWho').onclick=askWho;
 function showWho(){$('cWho').textContent='Chauffeur : '+(S.who||'—')+' (changer)';}
@@ -764,7 +764,7 @@ async function purgeOld(){try{const k='cerco_purge';if(localStorage.getItem(k)==
 const COLS=['#0b3d20','#1e5bd8','#c0392b','#8e44ad','#d35400','#16a085'];
 function showTab(t){$('tChauf').classList.toggle('on',t==='c');$('tBur').classList.toggle('on',t==='b');$('vChauf').classList.toggle('hide',t!=='c');$('vBur').classList.toggle('hide',t!=='b');
  try{localStorage.setItem('cerco_tab',t)}catch(e){}
- if(t==='b')startBureau();else{M1.draw();if(!S.who)askWho();if(!gpsStarted){gpsStarted=true;startGPS();keepAwake();}}}
+ if(t==='b'){$('mCode').classList.add('hide');startBureau();}else{if(FB.auth&&!FB.ok&&!FB.boss&&!S.member)$('mCode').classList.remove('hide');M1.draw();if(!S.who)askWho();if(!gpsStarted){gpsStarted=true;startGPS();keepAwake();}}}
 let gpsStarted=false;
 $('tChauf').onclick=()=>showTab('c');$('tBur').onclick=()=>showTab('b');
 function startBureau(){
