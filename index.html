@@ -352,7 +352,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=27;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=28;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -858,7 +858,7 @@ function subBureau(){
 function fsFill(haCov,cs,haT,volT){if(!document.body.classList.contains('fs'))return;const w=document.querySelector('#wx2 .wxs');
  $('fsInfo').innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">'+esc(PRESTA.nom||'Suivi en direct')+' · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</b><button class="btn sec" id="fsOut" style="width:auto;padding:3px 10px;font-size:12px">Quitter</button></div>'+
  '<div>'+$('bLive').innerHTML+'</div>'+(w?'<div class="'+w.className+'">'+esc(w.textContent)+'</div>':'')+
- '<div class="fk"><div><b>'+f1(haT)+' ha</b>pulvérisés</div><div><b>'+cs.length+'</b>cuve'+(cs.length>1?'s':'')+'</div><div><b>'+f0(volT)+' L</b>vidés</div>'+(haCov?'<div><b>'+f1(haCov)+' ha</b>parcelles RN</div>':'')+'</div>'+$('bCuves').innerHTML;
+ '<div class="fk"><div><b>'+f1(haT)+' ha</b>réalisés</div><div><b>'+cs.length+'</b>cuve'+(cs.length>1?'s':'')+'</div><div><b>'+f0(volT)+' L</b>vidés</div>'+(haCov?'<div><b>'+f1(haCov)+' ha</b>parcelles RN</div>':'')+'</div>'+$('bCuves').innerHTML;
  $('fsOut').onclick=()=>fsSet(false);}
 function fsSet(on){document.body.classList.toggle('fs',on);try{if(on&&document.documentElement.requestFullscreen&&!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});}catch(e){}if(M2){M2._fk=null;setTimeout(()=>{renderBureau();},150);}}
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('fs'))fsSet(false);});
@@ -876,10 +876,11 @@ function renderBureau(){
  const cs=Object.values(bCuves).sort((a,b)=>a.start-b.start);
  let haT=0,volT=0;cs.forEach(c=>{haT+=c.ha||0;volT+=c.end?c.vol:0;});
  let haCov=0;for(let i=1;i<=NAMES.length;i++)haCov+=B.cov.n[i]*CELL*CELL/1e4;
- $('bK').innerHTML='<div class="k g"><div class="v">'+f1(haCov)+' ha</div><div class="l">surface de parcelles couverte</div></div><div class="k"><div class="v">'+cs.length+' cuve'+(cs.length>1?'s':'')+'</div><div class="l">'+f0(volT)+' L vidés · '+f1(haT)+' ha pulvérisés</div></div>';
+ let haTr=0;{const W=SW(S.cfg);tracks.forEach(t=>{let pv=null;t.pts.forEach(q=>{if(pv&&!q[5]&&q[3]&&pv[3]){const d=Math.hypot(q[1]-pv[1],q[2]-pv[2]),dt=(q[0]-pv[0])/1000;if(dt>0&&dt<120&&d/dt<=MAXV)haTr+=d*W/1e4;}pv=q;});});}
+ $('bK').innerHTML='<div class="k g"><div class="v">'+f1(haTr)+' ha</div><div class="l">surface réalisée (tracé GPS, canon en marche)'+(haCov>0.05?' · dont parcelles RN : '+f1(haCov)+' ha':'')+'</div></div><div class="k"><div class="v">'+cs.length+' cuve'+(cs.length>1?'s':'')+'</div><div class="l">'+f0(volT)+' L vidés · '+f1(haT)+' ha pulvérisés</div></div>';
  $('bCuves').innerHTML=cs.length?'<table><tr><th>Chauffeur</th><th>Cuve</th><th>Heure</th><th class="n">Obj.</th><th class="n">Fait</th><th class="n">Écart</th></tr>'+cs.map(k=>{const e=k.obj?((k.ha||0)-k.obj)/k.obj:0;const cl=!k.end?'':Math.abs(e)<=.1?'ok':Math.abs(e)<=.2?'wa':'ko';
   return '<tr><td>'+(k.who||'')+'</td><td>'+k.n+' · '+k.vol+' L</td><td>'+hm(k.start)+(k.end?'–'+hm(k.end):' (en cours)')+'</td><td class="n">'+f1(k.obj)+'</td><td class="n">'+f1(k.ha||0)+'</td><td class="n '+cl+'">'+(k.end?(e>0?'+':'')+Math.round(e*100)+' %':'')+'</td></tr>'}).join('')+'</table>':'Aucune cuve.';
- renderParcTbl($('bParc'),B.cov);fsFill(haCov,cs,haT,volT);
+ renderParcTbl($('bParc'),B.cov);fsFill(haCov,cs,haTr,volT);
  {const P=[];M2.others.forEach(o=>{if(o.x!=null)P.push([o.x,o.y]);});tracks.forEach(t=>t.pts.forEach(q=>P.push([q[1],q[2]])));
   const out=P.filter(p=>p[0]<-50||p[1]<-50||p[0]>G.w+50||p[1]>G.h+50);const key=out.length?'o'+Math.round(out[0][0]/2000)+'_'+Math.round(out[0][1]/2000):'rn';
   if(M2._fk!==key){let ok=true;if(out.length){let a=1e12,b=1e12,A=-1e12,B2=-1e12;out.forEach(p=>{a=Math.min(a,p[0]);b=Math.min(b,p[1]);A=Math.max(A,p[0]);B2=Math.max(B2,p[1]);});const cx=(a+A)/2,cy=(b+B2)/2,h=Math.max(300,(A-a)/2+150,(B2-b)/2+150);ok=M2.fitBox(cx-h,cy-h,cx+h,cy+h);}else{const r=M2.cv.getBoundingClientRect();if(r.width<10)ok=false;else M2.fit();}if(ok)M2._fk=key;}}
