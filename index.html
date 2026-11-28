@@ -95,6 +95,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
 .login{text-align:center;padding:28px 16px}
 .login p{color:var(--mut);margin:6px 0 16px}
 .sect{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);font-weight:600;margin:18px 2px 8px}
+body.fs header,body.fs #tabsMain,body.fs #bTabs,body.fs #msg{display:none!important}body.fs #mapc2{position:fixed;inset:0;z-index:50;background:#e9ece6}body.fs #mapc2>#mapc{height:100vh!important;border-radius:0;margin:0}#fsInfo{display:none}body.fs #fsInfo{display:block;position:fixed;top:8px;left:8px;z-index:60;width:min(380px,46vw);max-height:calc(100vh - 16px);overflow:auto;background:rgba(255,255,255,.93);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.35;box-shadow:0 2px 10px rgba(0,0,0,.18)}#fsInfo table{font-size:11px;width:100%}#fsInfo .fk{display:flex;gap:10px;margin:6px 0}#fsInfo .fk b{font-size:17px;display:block}#fsInfo .wxs{margin:4px 0;padding:4px 8px;font-size:12px}
 @media print{header,.tabs,#vChauf,.noprint,#mapc2,#bK,.msg,.wx{display:none!important}body{background:#fff}.card{border:0;padding:0}.bon{break-inside:avoid;border:1px solid #999}}
 </style>
 </head>
@@ -138,7 +139,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
  <div class="card wx" id="wx2" data-bt="live"><div class="wxh"><h2 style="margin:0">Météo</h2><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:14px">Vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:14px">Pluie (Windy)</button></div></div>
  <div data-bt="live"><div class="big" id="bK"></div>
  <div style="height:8px"></div>
- <div id="mapc2"></div></div>
+ <button class="btn sec" id="fsBtn" style="padding:8px;margin-bottom:8px">⛶ Plein écran</button><div id="mapc2"></div></div><div id="fsInfo"></div>
  <div class="card noprint" data-bt="ch"><h2>Chantiers</h2><div class="sm">Un chantier par demande d'intervention. Les chauffeurs ne voient que les chantiers dont la demande signée est reçue.</div><div class="row2" style="margin:8px 0"><button class="btn" id="chNew" style="padding:10px">+ Nouveau chantier</button><button class="btn sec" id="regBtn" style="padding:10px">Registre (Excel)</button></div><div id="chForm" class="hide"><div id="chF"></div><div class="row2"><button class="btn sec" id="chCancel" style="padding:10px">Annuler</button><button class="btn" id="chSave" style="padding:10px">Enregistrer</button></div></div><div id="chList" class="sm">—</div></div>
  <div class="card noprint" data-bt="set"><details open><summary><b>Clients</b></summary><button class="btn sec" id="clNew" style="padding:10px;margin:8px 0">+ Nouveau client</button><div id="clForm" class="hide"><div id="clF"></div><div class="row2"><button class="btn sec" id="clCancel" style="padding:10px">Annuler</button><button class="btn" id="clSave" style="padding:10px">Enregistrer</button></div><button class="btn sec hide" id="clDel" style="padding:8px;margin-top:6px">Supprimer ce client</button></div><div id="clList" class="sm">—</div></details></div>
  <div class="card noprint" data-bt="set"><details><summary><b>Prestataire</b> (en-tête des documents)</summary><div id="prE" style="margin-top:8px"></div><button class="btn" id="prSave" style="padding:10px">Enregistrer</button></details></div>
@@ -351,7 +352,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=26;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=27;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -829,6 +830,7 @@ function showTab(t){$('setCard').classList.toggle('hide',t==='b');$('tChauf').cl
  if(t==='b'){$('mCode').classList.add('hide');startBureau();}else{if(FB.auth&&!FB.ok&&!FB.boss&&!S.member)$('mCode').classList.remove('hide');M1.draw();if(!S.who)askWho();if(!gpsStarted){gpsStarted=true;startGPS();keepAwake();}}}
 let gpsStarted=false;
 $('tChauf').onclick=()=>showTab('c');$('tBur').onclick=()=>showTab('b');
+$('fsBtn').onclick=()=>fsSet(true);
 let bTab='ch';try{bTab=localStorage.getItem('cerco_btab')||'ch'}catch(e){}
 function showBTab(t){bTab=t;try{localStorage.setItem('cerco_btab',t)}catch(e){}document.querySelectorAll('#bTabs button').forEach(b=>b.classList.toggle('on',b.dataset.bt===t));document.querySelectorAll('#bBody [data-bt]:not(button)').forEach(e=>e.classList.toggle('hide',e.dataset.bt!==t));if(t==='live'&&typeof M2!=='undefined'&&M2){setTimeout(()=>{try{window.dispatchEvent(new Event('resize'));renderBureau();}catch(e){}},50);}}
 document.querySelectorAll('#bTabs button').forEach(b=>b.onclick=()=>showBTab(b.dataset.bt));showBTab(bTab);
@@ -853,6 +855,13 @@ function subBureau(){
  bUnsub.push(m.onSnapshot(m.collection(db,'live'),q=>{bLive={};q.forEach(d=>{const x=d.data();if(x&&x.x!=null)bLive[d.id]=x;});renderBureau();}));
  bBons={};bUnsub.push(m.onSnapshot(m.collection(db,'jours',bDay,'bons'),q=>{bBons={};q.forEach(d=>bBons[d.id]=d.data());renderBons();}));
 }
+function fsFill(haCov,cs,haT,volT){if(!document.body.classList.contains('fs'))return;const w=document.querySelector('#wx2 .wxs');
+ $('fsInfo').innerHTML='<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px">'+esc(PRESTA.nom||'Suivi en direct')+' · '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</b><button class="btn sec" id="fsOut" style="width:auto;padding:3px 10px;font-size:12px">Quitter</button></div>'+
+ '<div>'+$('bLive').innerHTML+'</div>'+(w?'<div class="'+w.className+'">'+esc(w.textContent)+'</div>':'')+
+ '<div class="fk"><div><b>'+f1(haT)+' ha</b>pulvérisés</div><div><b>'+cs.length+'</b>cuve'+(cs.length>1?'s':'')+'</div><div><b>'+f0(volT)+' L</b>vidés</div>'+(haCov?'<div><b>'+f1(haCov)+' ha</b>parcelles RN</div>':'')+'</div>'+$('bCuves').innerHTML;
+ $('fsOut').onclick=()=>fsSet(false);}
+function fsSet(on){document.body.classList.toggle('fs',on);try{if(on&&document.documentElement.requestFullscreen&&!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});}catch(e){}if(M2){M2._fk=null;setTimeout(()=>{renderBureau();},150);}}
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('fs'))fsSet(false);});
 function renderBureau(){
  if(!M2)return;
  const groups={};Object.keys(bPts).sort().forEach(k=>{const g=bPts[k];(groups[g.who]=groups[g.who]||[]).push(...g.p);});
@@ -870,7 +879,7 @@ function renderBureau(){
  $('bK').innerHTML='<div class="k g"><div class="v">'+f1(haCov)+' ha</div><div class="l">surface de parcelles couverte</div></div><div class="k"><div class="v">'+cs.length+' cuve'+(cs.length>1?'s':'')+'</div><div class="l">'+f0(volT)+' L vidés · '+f1(haT)+' ha pulvérisés</div></div>';
  $('bCuves').innerHTML=cs.length?'<table><tr><th>Chauffeur</th><th>Cuve</th><th>Heure</th><th class="n">Obj.</th><th class="n">Fait</th><th class="n">Écart</th></tr>'+cs.map(k=>{const e=k.obj?((k.ha||0)-k.obj)/k.obj:0;const cl=!k.end?'':Math.abs(e)<=.1?'ok':Math.abs(e)<=.2?'wa':'ko';
   return '<tr><td>'+(k.who||'')+'</td><td>'+k.n+' · '+k.vol+' L</td><td>'+hm(k.start)+(k.end?'–'+hm(k.end):' (en cours)')+'</td><td class="n">'+f1(k.obj)+'</td><td class="n">'+f1(k.ha||0)+'</td><td class="n '+cl+'">'+(k.end?(e>0?'+':'')+Math.round(e*100)+' %':'')+'</td></tr>'}).join('')+'</table>':'Aucune cuve.';
- renderParcTbl($('bParc'),B.cov);
+ renderParcTbl($('bParc'),B.cov);fsFill(haCov,cs,haT,volT);
  {const P=[];M2.others.forEach(o=>{if(o.x!=null)P.push([o.x,o.y]);});tracks.forEach(t=>t.pts.forEach(q=>P.push([q[1],q[2]])));
   const out=P.filter(p=>p[0]<-50||p[1]<-50||p[0]>G.w+50||p[1]>G.h+50);const key=out.length?'o'+Math.round(out[0][0]/2000)+'_'+Math.round(out[0][1]/2000):'rn';
   if(M2._fk!==key){let ok=true;if(out.length){let a=1e12,b=1e12,A=-1e12,B2=-1e12;out.forEach(p=>{a=Math.min(a,p[0]);b=Math.min(b,p[1]);A=Math.max(A,p[0]);B2=Math.max(B2,p[1]);});const cx=(a+A)/2,cy=(b+B2)/2,h=Math.max(300,(A-a)/2+150,(B2-b)/2+150);ok=M2.fitBox(cx-h,cy-h,cx+h,cy+h);}else{const r=M2.cv.getBoundingClientRect();if(r.width<10)ok=false;else M2.fit();}if(ok)M2._fk=key;}}
