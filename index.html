@@ -351,7 +351,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=25;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=26;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -488,9 +488,9 @@ function liveState(force){if(!FB.ok)return;const e=etat();if(!force&&e===lastEta
  fbSet('live/'+WID(),{who:S.who||'',t:Date.now(),etat:e,on:0,day:S.day,cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:cuveStats(c).ha,start:c.start}:null});}
 function liveSend(p){
  if(!FB.ok)return;const now=Date.now();
- if(now-liveT>(POCHE?30000:10000)){liveT=now;const c=cur();const r=c?cuveStats(c):null;
+ if(now-liveT>(POCHE?10000:5000)){liveT=now;const c=cur();const r=c?cuveStats(c):null;
   lastEtat=etat();fbSet('live/'+WID(),{who:S.who||'',etat:etat(),t:p[0],x:p[1],y:p[2],acc:p[4],on:p[3],day:S.day,parc:lastPos?(S.cp?cpAt(lastPos[0],lastPos[1]):(NAMES[parcAt(lastPos[0],lastPos[1])-1]||'')):'',cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:r.ha,start:c.start}:null});}
- if(now-ptsT>20000)flushPts();
+ if(now-ptsT>15000)flushPts();
 }
 function flushPts(){
  if(!FB.ok)return;ptsT=Date.now();const n=S.pts.length;if((S.sent||0)>=n)return;
