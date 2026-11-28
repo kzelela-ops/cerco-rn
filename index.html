@@ -128,7 +128,7 @@ body.fsC header,body.fsC #tabsMain,body.fsC #noCuve,body.fsC #wx1,body.fsC #setC
  <div style="height:8px"></div>
  <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:10px">Pause</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
  <details class="card"><summary>Mes cuves et bons du jour</summary><div id="dayTbl" class="sm">Aucune cuve.</div><div id="myBons"></div></details>
- <button class="btn sec hide" id="chFin" style="margin-bottom:10px">Chantier terminé</button>
+ <button class="btn sec hide" id="chFin" style="margin-bottom:10px">Traitement terminé pour ce client</button>
  <details class="card" id="parcCard"><summary>Parcelles traitées aujourd'hui</summary><div id="parcTbl" class="sm">—</div></details>
 </section>
 
@@ -226,9 +226,9 @@ const hm=t=>{const d=new Date(t);return pad(d.getHours())+'h'+pad(d.getMinutes()
 const KEY='cerco_rn_v1';
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){S=null}
-const DEF_CFG={dose:50,larg:20,side:'D',acc:30,seuil:85,ventMax:19,pluieH:2,tour:10};const SW=c=>c.larg*(c.side==='2'?2:1);
+const DEF_CFG={dose:50,larg:25,side:'D',acc:30,seuil:85,ventMax:19,pluieH:2,tour:10};const SW=c=>c.larg*(c.side==='2'?2:1);
 if(!S)S={cfg:Object.assign({},DEF_CFG)};
-S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}
+S.cfg=Object.assign({},DEF_CFG,S.cfg||{});if(!S.cfg.v2){S.cfg.larg=25;S.cfg.side='D';S.cfg.v2=1;}if(!S.cfg.v3){S.cfg.larg=20;S.cfg.v3=1;}if(!S.cfg.v4){S.cfg.larg=25;S.cfg.v4=1;}
 const WID=()=>(S.who||'sans-nom').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function newDay(){S.day=dayOf(Date.now());S.pts=[];S.cuves=[];S.cur=null;S.on=false;S.sent=0;S.bons=[];S.ptIds=[];}
 if(S.day!==dayOf(Date.now()))newDay();
@@ -354,7 +354,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=29;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=30;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -539,18 +539,19 @@ $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
  $('endTxt').innerHTML=t;$('mEnd').classList.remove('hide');};
 $('eBack').onclick=()=>$('mEnd').classList.add('hide');
 $('eOk').onclick=()=>{const c=cur();const lp=S.pts[S.pts.length-1];c.end=Math.max(Date.now(),lp?lp[0]:0);const r=cuveStats(c);c.ha=r.ha;S.cuves.push(c);S.cur=null;S.on=false;S.paused=false;S.brk=true;$('mEnd').classList.add('hide');
- liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Bon d\'intervention enregistré.');sendCuve(c);flushPts();
+ liveState(true);const e=(r.ha-c.obj)/c.obj;say('Cuve '+c.n+' terminée : '+f1(r.ha)+' hectares, écart '+Math.round(e*100)+' pour cent. Cuve enregistrée.');sendCuve(c);flushPts();
  notif(who()+' : cuve '+c.n+' terminée',hm(c.start)+' – '+hm(c.end)+' · '+f1(r.ha)+' ha pour '+f1(c.obj)+' prévus ('+(e>0?'+':'')+Math.round(e*100)+' %).','white_check_mark',3);
- const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);if(c.chId)fbSet('chantiers/'+c.chId+'/bons/'+WID()+'_'+c.id,bon);purgeCuve(c);setPoche(false);$('bonTxt').innerHTML=bonHtml(bon);$('mBon').classList.remove('hide');renderChauf();};
+ const bon=makeBon(c);bon.st={};bon.parc.forEach(x=>{const i=NAMES.indexOf(x.n)+1;if(i){const pc=Math.round(100*built.cov.n[i]/tot[i]);bon.st[x.n]={pc,fini:pc>=S.cfg.seuil};}});S.bons.push(bon);fbSet('jours/'+S.day+'/bons/'+WID()+'_'+c.id,bon);if(c.chId)fbSet('chantiers/'+c.chId+'/bons/'+WID()+'_'+c.id,bon);purgeCuve(c);setPoche(false);msg('Cuve '+c.n+' enregistrée : '+f1(r.ha)+' ha. Le bon d\'intervention unique sera fait à la fin du traitement.','i');renderChauf();};
 /* bon généré : on supprime du serveur les positions, la cuve et la position en direct ; seul le bon reste */
 function purgeCuve(c){if(!FB.ok)return;const m=FB.m,db=FB.db,ids=(S.ptIds||[]).slice();S.ptIds=[];save();
  try{ids.forEach(id=>m.deleteDoc(m.doc(db,'jours',S.day,'pts',id)).catch(()=>{}));m.deleteDoc(m.doc(db,'jours',S.day,'cuves',WID()+'_'+c.id)).catch(()=>{});
   m.setDoc(m.doc(db,'live',WID()),{who:S.who||'',t:Date.now(),etat:'entre deux cuves',on:0,day:S.day,uid:FB.uid,x:null,y:null,acc:null,parc:'',cuve:null}).catch(()=>{});}catch(e){}}
+function trkOf(c){const o=[];let lx=null,ly=null,lo=-1;for(const p of S.pts){if(p[0]<c.start||p[0]>c.end||p[4]>S.cfg.acc)continue;const on=p[3]?1:0;if(p[5]||lx===null||on!==lo||Math.hypot(p[1]-lx,p[2]-ly)>=6){o.push(Math.round(p[1]),Math.round(p[2]),p[5]?2:on);lx=p[1];ly=p[2];lo=on;}}return o;}
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
   if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=S.cp?0:parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=S.cp?(cpAt((p[1]+prev[1])/2,(p[2]+prev[2])/2)||'Hors parcelle'):(i&&!S.noGeo?NAMES[i-1]:((S.noGeo||S.free||outRN((p[1]+prev[1])/2,(p[2]+prev[2])/2))?'Surface tracée':'Hors parcelle'));per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
  const parc=Object.entries(per).filter(x=>x[1]>=0.05&&x[0]!=='Hors parcelle').sort((a,b)=>b[1]-a[1]).map(([n,ha])=>Object.assign({n,ha:Math.round(ha*100)/100},S.cp?{s:Math.round(S.cp.filter(g=>g.n===n).reduce((a,g)=>a+g.ha,0)*100)/100}:{}));
- return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,client:c.client||'',donneur:c.donneur||'',note:c.note||'',wx:c.wx||null,bt:c.bt||0,chId:c.chId||'',parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0,presta:S.presta||''};}
+ return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,client:c.client||'',donneur:c.donneur||'',note:c.note||'',wx:c.wx||null,bt:c.bt||0,chId:c.chId||'',parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0,presta:S.presta||'',trk:trkOf(c),larg:S.cfg.larg,side:S.cfg.side};}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 const FCSS='*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:10.5px;margin:0;padding:14px;background:#fff}.f{max-width:760px;margin:0 auto}.ft{border:1.5px solid #111;text-align:center;font-weight:700;font-size:12px;padding:5px;margin-bottom:6px}.g{display:grid;grid-template-columns:34% 66%;border:1.5px solid #111;border-bottom:0}.g>div{padding:6px 8px}.g>div+div{border-left:1.5px solid #111}.sh{background:#1f6b45;color:#fff;font-weight:700;padding:4px 8px;font-size:11.5px;border:1.5px solid #111;border-bottom:0}.box{border:1.5px solid #111;border-bottom:0;padding:6px 8px}.last{border-bottom:1.5px solid #111}table{width:100%;border-collapse:collapse;table-layout:auto;font-size:9.5px}td,th{border:1px solid #555;padding:2px 4px;vertical-align:top;text-align:left}td:first-child{white-space:nowrap}.nw{white-space:nowrap}th,th.n{background:#eef2ee;font-size:8.5px;white-space:normal}.n{text-align:right;white-space:nowrap}.cb{display:inline-block;width:10px;height:10px;border:1px solid #111;margin:0 3px -1px 8px;text-align:center;line-height:9px;font-size:9px}.l{color:#444}.b{font-weight:700}.c2{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}.c3{display:grid;grid-template-columns:1fr 1fr 1fr}.c3>div{padding:6px 8px;min-height:74px}.c3>div+div{border-left:1.5px solid #111}.dots{border-bottom:1px dotted #666;display:inline-block;min-width:120px}.sm{font-size:9px;color:#444}@page{size:A4;margin:10mm}';
 function btNo(c){if(!c||!c.maj)return '—';const d=new Date(c.maj);return 'BT-'+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+pad(d.getDate())+'-'+pad(d.getHours())+pad(d.getMinutes());}
@@ -693,12 +694,12 @@ function renderChantiers(){const L=Object.values(CH).sort((a,b)=>(b.t||0)-(a.t||
   return '<div class="bon" style="margin:6px 0"><div><b>'+esc(cl.nom||c.clientNom||'?')+'</b> · '+f1(c.surface||0)+' ha · '+esc((c.produits||[]).map(p=>p.nom).join(', '))+'</div><div class="sm">Ordre '+esc((c.ordre&&c.ordre.ref)||'—')+' · prévu le '+(dFr(c.prevu)||'—')+' · <b>'+(ETAT[c.etat]||c.etat)+'</b>'+(late?' · <span class="ko">délai de 5 jours dépassé</span>':'')+'</div>'+
   '<div class="row2" style="margin-top:6px"><button class="btn sec" data-chd="'+c.id+'" style="padding:8px;font-size:14px">Demande d\'intervention (PDF)</button>'+
   (c.etat==='demande'?'<button class="btn" data-chs="'+c.id+'" style="padding:8px;font-size:14px">Ouvrir aux chauffeurs</button>':'<button class="btn" data-chb="'+c.id+'" style="padding:8px;font-size:14px">Bon d\'intervention (PDF)</button>')+'</div>'+
-  '<div class="row2" style="margin-top:6px"><button class="btn sec" data-che="'+c.id+'" style="padding:8px;font-size:14px">Modifier</button>'+(c.etat==='termine'?'<button class="btn sec" data-chr="'+c.id+'" style="padding:8px;font-size:14px">Rouvrir</button>':c.etat==='signee'?'<button class="btn sec" data-cht="'+c.id+'" style="padding:8px;font-size:14px">Clore le chantier</button>':'<button class="btn sec" data-chx="'+c.id+'" style="padding:8px;font-size:14px">Supprimer</button>')+'</div>'+(c.sig&&c.sig.nom?'<div class="sm" style="margin-top:4px">Signée en ligne par <b>'+esc(c.sig.nom)+'</b>'+(c.sig.qual?' ('+esc(c.sig.qual)+')':'')+' le '+new Date(c.sig.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+'</div>':(c.tok&&c.etat==='demande'?'<div class="sm" style="margin-top:4px">Lien de signature envoyé, en attente du client.</div>':''))+'</div>';}).join(''):'Aucun chantier.';
+  '<div class="row2" style="margin-top:6px"><button class="btn sec" data-che="'+c.id+'" style="padding:8px;font-size:14px">Modifier</button>'+(c.etat==='termine'?'<button class="btn sec" data-chr="'+c.id+'" style="padding:8px;font-size:14px">Rouvrir</button>':c.etat==='signee'?'<button class="btn sec" data-cht="'+c.id+'" style="padding:8px;font-size:14px">Traitement terminé : faire le bon</button>':'<button class="btn sec" data-chx="'+c.id+'" style="padding:8px;font-size:14px">Supprimer</button>')+'</div>'+(c.sig&&c.sig.nom?'<div class="sm" style="margin-top:4px">Signée en ligne par <b>'+esc(c.sig.nom)+'</b>'+(c.sig.qual?' ('+esc(c.sig.qual)+')':'')+' le '+new Date(c.sig.at).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})+'</div>':(c.tok&&c.etat==='demande'?'<div class="sm" style="margin-top:4px">Lien de signature envoyé, en attente du client.</div>':''))+'</div>';}).join(''):'Aucun chantier.';
  const q=s=>$('chList').querySelectorAll(s);
  q('[data-chd]').forEach(b=>b.onclick=()=>{const c=CH[b.dataset.chd],cl=CL[c.client]||{};printDoc('Demande d\'intervention '+(cl.nom||''),demandeHtml(c,cl));});
  q('[data-chs]').forEach(b=>b.onclick=()=>chEtat(b.dataset.chs,'signee'));
  q('[data-chl]').forEach(b=>b.onclick=()=>sendSign(b.dataset.chl));
- q('[data-cht]').forEach(b=>b.onclick=()=>chEtat(b.dataset.cht,'termine'));
+ q('[data-cht]').forEach(b=>b.onclick=async()=>{if(!confirm('Le traitement est terminé pour ce client ? Le bon d\'intervention unique va s\'ouvrir.'))return;printChantier(b.dataset.cht);await chEtat(b.dataset.cht,'termine');});
  q('[data-chr]').forEach(b=>b.onclick=()=>chEtat(b.dataset.chr,'signee'));
  q('[data-chx]').forEach(b=>b.onclick=async()=>{if(!confirm('Supprimer ce chantier ?'))return;try{await FB.m.deleteDoc(FB.m.doc(FB.db,'chantiers',b.dataset.chx));}catch(e){msg('Impossible : '+(e.code||e.message),'w');}});
  q('[data-che]').forEach(b=>b.onclick=()=>chForm(b.dataset.che));
@@ -758,6 +759,21 @@ function demandeHtml(c,cl){const tb=(c.surface||0)*(c.bouillie||50);
  '<div class="sm" style="margin-top:4px">À retourner signée par mail au prestataire. Sans demande signée, aucune intervention.</div></div>';}
 async function printChantier(id){const c=CH[id],cl=CL[c.client]||{};const B=[];try{const q=await FB.m.getDocs(FB.m.collection(FB.db,'chantiers',id,'bons'));q.forEach(d=>B.push(d.data()));}catch(e){msg('Lecture des bons impossible : '+(e.code||e.message),'w');return;}
  if(!B.length){msg('Aucune cuve enregistrée pour ce chantier.','w');return;}printDoc('Bon d\'intervention '+(cl.nom||''),bonPrHtml(c,cl,B));}
+function mapSvg(B,c){const L=[];let a=1e12,b=1e12,A=-1e12,Bm=-1e12;
+ B.forEach(x=>{const t=x.trk;if(!t||t.length<6)return;L.push({t,W:x.larg||S.cfg.larg||25,sd:x.side||'D'});for(let i=0;i<t.length;i+=3){a=Math.min(a,t[i]);b=Math.min(b,t[i+1]);A=Math.max(A,t[i]);Bm=Math.max(Bm,t[i+1]);}});
+ if(!L.length)return '';const pd=40;a-=pd;b-=pd;A+=pd;Bm+=pd;let w=A-a,h=Bm-b;if(w<250){a-=(250-w)/2;w=250;}if(h<180){b-=(180-h)/2;h=180;}if(h>w*1.1){a-=(h*1.1-w)/2;w=h*1.1;}A=a+w;Bm=b+h;
+ const inb=(x,y)=>x>=a&&x<=A&&y>=b&&y<=Bm,lw=w/700,fs=w/55;let bg='',lb='';
+ const pol=(xs,ys,n)=>{let s='',hit=false,cx=0,cy=0;for(let i=0;i<xs.length;i++){s+=xs[i]+','+ys[i]+' ';if(inb(xs[i],ys[i]))hit=true;cx+=xs[i];cy+=ys[i];}if(!hit)return;bg+='<polygon points="'+s+'" fill="#f6dedc" stroke="#b84a45" stroke-width="'+lw+'"/>';if(n)lb+='<text x="'+(cx/xs.length).toFixed(0)+'" y="'+(cy/xs.length).toFixed(0)+'" font-size="'+fs.toFixed(1)+'" text-anchor="middle" fill="#5a2a27">'+esc(n.replace('Rivière Noire ','RN '))+'</text>';};
+ if(c.geo==='RN'||!(c.cparcs&&c.cparcs.length))G.g.forEach(g=>{if(g.k==='prod')pol(g.p.map(q=>q[0]),g.p.map(q=>q[1]),g.n);});
+ (c.cparcs||[]).forEach(g=>{const xs=[],ys=[];for(let i=0;i<g.p.length;i+=2){xs.push(g.p[i]);ys.push(g.p[i+1]);}pol(xs,ys,g.n);});
+ let sw='',ln='';L.forEach(({t,W,sd})=>{const o=sd==='2'?0:(sd==='G'?-1:1)*W/2;let s='',l='';
+  for(let i=3;i<t.length;i+=3){if(t[i+2]===2)continue;const x0=t[i-3],y0=t[i-2],x1=t[i],y1=t[i+1],dx=x1-x0,dy=y1-y0,d=Math.hypot(dx,dy);if(!d||d>200)continue;
+   if(t[i+2]===1&&t[i-1]===1){const nx=-dy/d*o,ny=dx/d*o;s+='M'+(x0+nx).toFixed(1)+' '+(y0+ny).toFixed(1)+'L'+(x1+nx).toFixed(1)+' '+(y1+ny).toFixed(1);}
+   l+='M'+x0+' '+y0+'L'+x1+' '+y1;}
+  sw+='<path d="'+s+'" stroke="rgba(46,160,90,.45)" stroke-width="'+(sd==='2'?2*W:W)+'" fill="none" stroke-linecap="butt"/>';ln+='<path d="'+l+'" stroke="#0b3d20" stroke-width="'+(lw*1.6)+'" fill="none"/>';});
+ const sc=w>3000?500:w>1200?200:100,sx=a+w*0.04,sy=Bm-h*0.05;
+ return '<div style="margin-top:6px;page-break-inside:avoid"><div style="font-weight:700;font-size:10px;margin-bottom:2px">Carte du traitement — trait foncé : tracé GPS du tracteur · bande verte : zone pulvérisée (canon '+(L[0].W)+' m'+(L[0].sd==='2'?' de chaque côté':L[0].sd==='G'?' à gauche':' à droite')+')</div><svg viewBox="'+a.toFixed(0)+' '+b.toFixed(0)+' '+w.toFixed(0)+' '+h.toFixed(0)+'" style="width:100%;max-height:105mm;border:1px solid #555;background:#f4f6f1">'+bg+sw+ln+lb+
+  '<path d="M'+sx.toFixed(0)+' '+sy.toFixed(0)+'h'+sc+'" stroke="#111" stroke-width="'+(lw*3)+'"/><text x="'+(sx+sc/2).toFixed(0)+'" y="'+(sy-h*0.015).toFixed(0)+'" font-size="'+fs.toFixed(1)+'" text-anchor="middle">'+sc+' m</text></svg></div>';}
 function bonPrHtml(c,cl,B){B.sort((a,b)=>a.start-b.start);const P=PRESTA;
  const per={};B.forEach(b=>(b.parc||[]).forEach(x=>{if(x.n!=='Hors parcelle')per[x.n]=(per[x.n]||0)+x.ha;}));
  const haT=Math.round(Object.values(per).reduce((a,x)=>a+x,0)*100)/100,vol=B.reduce((a,b)=>a+(b.vol||0),0);
@@ -777,7 +793,7 @@ function bonPrHtml(c,cl,B){B.sort((a,b)=>a.start-b.start);const P=PRESTA;
  '<div class="bx">Application en prestation de service sous l\'agrément n° <span>'+esc(P.agrement||'')+'</span></div></div></div>'+
  '<table><tr><th>Parcelle</th><th>Surface à traiter</th><th>Matériel</th><th>Produits appliqués</th><th>Quantité/ha</th><th>Quantité appliquée</th></tr>'+rows+
  '<tr><th>Total</th><th class="n">'+n2(haT)+' ha</th><th>Canon</th><th style="text-align:left">'+prod+'</th><th class="n">'+dha+'</th><th class="n">'+PL.map(x=>n2(x.tq)+' '+x.p.u).join(' / ')+'</th></tr>'+
- '<tr><td colspan="6"><b>Observations :</b> surface demandée '+n2(c.surface||0)+' ha, traitée '+n2(haT)+' ha (écart '+(eS==null?'—':(eS>0?'+':'')+eS+' %')+')'+(vol?' · '+f0(vol)+' L de bouillie, soit '+f0(vol/haT)+' L/ha':'')+'. '+(B.some(b=>b.src==='milagro')?'Quantités reprises des saisies Milagro.':'Surfaces mesurées par GPS, canon en marche.')+'</td></tr></table>'+
+ '<tr><td colspan="6"><b>Observations :</b> surface demandée '+n2(c.surface||0)+' ha, traitée '+n2(haT)+' ha (écart '+(eS==null?'—':(eS>0?'+':'')+eS+' %')+')'+(vol?' · '+f0(vol)+' L de bouillie, soit '+f0(vol/haT)+' L/ha':'')+'. '+(B.some(b=>b.src==='milagro')?'Quantités reprises des saisies Milagro.':'Surfaces mesurées par GPS, canon en marche.')+'</td></tr></table>'+mapSvg(B,c)+
  '<div class="c2"><div><i>Produits fournis</i>'+O(cl.fourn==='C')+'Par le client '+O(cl.fourn!=='C')+'Par l\'entreprise<i>Lieu de remplissage</i>'+O(cl.rempl==='C')+'Chez le client '+O(cl.rempl!=='C')+'À l\'entreprise<i>Destination des EVPP :</i>'+O(cl.evpp==='C')+'Conservés par le client '+O(cl.evpp!=='C')+'Repris par l\'entreprise<i>Lieu de rinçage</i>'+O(cl.rinc==='C')+'Chez le client '+O(!cl.rinc||cl.rinc==='E')+'À l\'entreprise '+O(cl.rinc==='F')+'Au champ<i>Utilisation de buses antidérive :</i>'+O(cl.buses!==false)+'Oui '+O(cl.buses===false)+'Non</div>'+
  '<div><i>Problème rencontré lors de l\'application :</i><i style="margin-top:3px">Descriptif :</i><div class="ln"></div><div class="ln"></div><div class="ln"></div><i>Mesures prises &nbsp; '+K(0)+'Oui '+K(0)+'Non</i><i>Commentaire :</i><div class="ln"></div><div class="ln"></div></div></div>'+
  '<div class="bft">Date d\'intervention : '+days.join(', ')+'<br>Les consignes d\'exécution ont été respectées : '+K(ok)+'En totalité '+K(!ok)+'Partiellement<br>L\'enregistrement du chantier a été correctement complété : '+K(1)+'Oui '+K(0)+'Non</div>'+
@@ -804,9 +820,9 @@ function bonChHtml(c,cl,B){B.sort((a,b)=>a.start-b.start);
 /* côté chauffeur : chantiers signés */
 let CHD={};
 fbHooks.push(()=>{try{const m=FB.m;m.onSnapshot(m.query(m.collection(FB.db,'chantiers'),m.where('etat','==','signee')),q=>{CHD={};q.forEach(d=>CHD[d.id]=Object.assign({id:d.id},d.data()));renderChSel();},e=>console.warn('chantiers',e));}catch(e){}});
-function renderChSel(){if(!$('chSel'))return;const L=Object.values(CHD);if(S.chId&&FB.ok&&!CHD[S.chId]){S.chId='';S.noGeo=false;S.cp=null;save();}
+function renderChSel(){if(!$('chSel'))return;const L=Object.values(CHD);if(!S.chId&&!S.cur&&!S.noAuto&&L.length===1)pickCh(L[0].id);if(S.chId&&FB.ok&&!CHD[S.chId]){S.chId='';S.noGeo=false;S.cp=null;save();}
  $('chSel').innerHTML=L.length?'<div class="sm">Chantier :</div><select id="chPick" style="font-size:17px;padding:10px;border-radius:10px;border:1px solid #bbb;width:100%;margin-bottom:8px"><option value="">— sans chantier (traitement libre) —</option>'+L.map(c=>'<option value="'+c.id+'"'+(S.chId===c.id?' selected':'')+'>'+esc(c.clientNom||'')+' · '+f1(c.surface||0)+' ha'+((c.ordre||{}).ref?' · '+esc(c.ordre.ref):'')+'</option>').join('')+'</select>':(FB.ok?'<div class="msg w show" style="margin:6px 0">Aucun chantier ouvert : tu peux démarrer sans chantier.</div>':'');
- const p=$('chPick');if(p)p.onchange=()=>{pickCh(p.value);showObj();};$('chFin').classList.toggle('hide',!S.chId);}
+ const p=$('chPick');if(p)p.onchange=()=>{S.noAuto=!p.value;pickCh(p.value);showObj();};$('chFin').classList.toggle('hide',!S.chId);}
 function pickCh(id){const c=CHD[id];S.chId=c?id:'';S.cp=c&&c.geo==='CL'&&c.cparcs&&c.cparcs.length?c.cparcs:null;S.noGeo=c?(c.geo!=='RN'&&!S.cp):false;if(c){S.presta=c.prestaNom||S.presta||'';setHdr();S.consigne={produits:c.produits||[],client:c.clientNom||'',note:c.note||'',maj:c.maj||0};if(c.bouillie)S.cfg.dose=c.bouillie;}else{S.consigne={produits:[],client:'',note:'',maj:0};}S.free=!c;save();}
 $('chFin').onclick=async()=>{if(!S.chId)return;if(S.cur){msg('Termine d\'abord la cuve en cours.','w');return;}if(!confirm('Le chantier est terminé ? Le bon d\'intervention part au bureau.'))return;
  try{await FB.m.updateDoc(FB.m.doc(FB.db,'chantiers',S.chId),{etat:'termine',fin:Date.now()});S.chId='';S.noGeo=false;S.cp=null;save();renderChSel();msg('Chantier terminé : bon d\'intervention transmis au bureau.','i');say('Chantier terminé.');}catch(e){msg('Impossible : '+(e.code||e.message),'w');}};
@@ -873,6 +889,7 @@ function renderBureau(){
  const whos=Object.keys(groups).sort();const col=w=>COLS[Math.max(0,whos.indexOf(w))%COLS.length];
  const cov=new Cover();const tracks=[];whos.forEach(w=>{const ps=groups[w].sort((a,b)=>a[0]-b[0]);build(ps,S.cfg,cov);tracks.push({pts:ps,col:col(w)});});
  const B={cov};M2.setCov(cov);M2.tracks=tracks;
+ Object.values(bBons).forEach(b=>{const t=b.trk;if(!t||t.length<6)return;const n=t.length/3,ps=[];for(let i=0;i<n;i++)ps.push([b.start+(b.end-b.start)*i/n,t[3*i],t[3*i+1],t[3*i+2]===1?1:0,5,t[3*i+2]===2?1:0]);tracks.push({pts:ps,col:col(b.who||'?')});});
  const today=bDay===dayOf(Date.now());
  const lv=Object.values(bLive).filter(x=>x.day===bDay);
  M2.others=today?lv.filter(x=>x.etat!=='pause'&&x.etat!=='attente').map(x=>({x:x.x,y:x.y,acc:x.acc,label:x.who||'?',col:col(x.who||'?')})):[];
