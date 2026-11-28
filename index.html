@@ -347,7 +347,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=23;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=24;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -486,7 +486,7 @@ function liveSend(p){
  if(!FB.ok)return;const now=Date.now();
  if(now-liveT>(POCHE?30000:10000)){liveT=now;const c=cur();const r=c?cuveStats(c):null;
   lastEtat=etat();fbSet('live/'+WID(),{who:S.who||'',etat:etat(),t:p[0],x:p[1],y:p[2],acc:p[4],on:p[3],day:S.day,parc:lastPos?(S.cp?cpAt(lastPos[0],lastPos[1]):(NAMES[parcAt(lastPos[0],lastPos[1])-1]||'')):'',cuve:c?{n:c.n,vol:c.vol,obj:c.obj,ha:r.ha,start:c.start}:null});}
- if(now-ptsT>60000)flushPts();
+ if(now-ptsT>20000)flushPts();
 }
 function flushPts(){
  if(!FB.ok)return;ptsT=Date.now();const n=S.pts.length;if((S.sent||0)>=n)return;
@@ -521,7 +521,9 @@ $('mCancel').onclick=()=>$('mCuve').classList.add('hide');
 $('mOk').onclick=()=>{const v=selVol||parseFloat($('volFree').value);if(!S.chId){S.free=true;S.noGeo=false;S.cp=null;}else S.free=false;if(!(v>0))return;const P=prepOf(v);if(P.L.length&&!$('prepChk').checked){msg('Coche « Cuve préparée selon la consigne » avant de démarrer.','w');say('Cochez cuve préparée avant de démarrer.');return;}
  const n=S.cuves.length+1,now=Date.now();S.cur={id:S.day+'_'+n+'_'+now,n,vol:v,obj:v/S.cfg.dose,start:now,prep:P.L,eau:P.eau,client:S.consigne.client||'',donneur:S.consigne.donneur||'',note:S.consigne.note||'',bt:S.consigne.maj||0,chId:S.chId||'',wx:(typeof WX!=='undefined'&&WX&&WX.current)?{v:Math.round(WX.current.wind_speed_10m),r:Math.round(WX.current.wind_gusts_10m),p:WX.current.precipitation||0}:null};S.on=false;S.paused=false;S.brk=true;
  $('mCuve').classList.add('hide');say('Cuve '+n+' : '+v+' litres, objectif '+f1(v/S.cfg.dose)+' hectares.');notif(who()+' : cuve '+n+' démarrée',v+' L à '+hm(now)+', objectif '+f1(v/S.cfg.dose)+' ha'+(P.L.length?' · '+P.L.map(x=>x.nom+' '+x.q.toLocaleString('fr-FR')+' '+x.u).join(', '):' · sans consigne')+'.','seedling',3);keepAwake();sendCuve(S.cur);renderChauf();};
-$('spray').onclick=()=>{if(S.paused)return;S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();};
+$('spray').onclick=()=>{if(S.paused)return;S.on=!S.on;say(S.on?'Canon en marche':'Canon arrêté');if(lastPos){const l=S.pts[S.pts.length-1];if(l)S.pts.push([Date.now(),l[1],l[2],S.on?1:0,l[4]]);}renderChauf();M1.draw();liveNow(true);};
+function liveNow(fl){if(!FB.ok||!lastPos)return;liveT=0;liveSend([Date.now(),Math.round(lastPos[0]*10)/10,Math.round(lastPos[1]*10)/10,S.on&&S.cur?1:0,Math.round((M1.pos||[])[2]||0)]);if(fl)flushPts();}
+setInterval(()=>{if(S.cur)liveNow(false);},20000);
 $('endCuve').onclick=()=>{const c=cur(),r=cuveStats(c),e=(r.ha-c.obj)/c.obj;
  let t='Cuve '+c.n+' : '+f1(r.ha)+' ha traités pour un objectif de '+f1(c.obj)+' ha ('+(e>0?'+':'')+Math.round(e*100)+' %).';
  if(e<-.1)t+='<br><b class="ko">Cuve vidée trop tôt : surdosage probable (vitesse trop lente ou débit trop fort).</b>';
