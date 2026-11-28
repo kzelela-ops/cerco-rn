@@ -96,6 +96,7 @@ h2{font-size:16px;margin:0 0 8px;font-weight:700}
 .login p{color:var(--mut);margin:6px 0 16px}
 .sect{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);font-weight:600;margin:18px 2px 8px}
 body.fs header,body.fs #tabsMain,body.fs #bTabs,body.fs #msg{display:none!important}body.fs #mapc2{position:fixed;inset:0;z-index:50;background:#e9ece6}body.fs #mapc2>#mapc{height:100vh!important;border-radius:0;margin:0}#fsInfo{display:none}body.fs #fsInfo{display:block;position:fixed;top:8px;left:8px;z-index:60;width:min(380px,46vw);max-height:calc(100vh - 16px);overflow:auto;background:rgba(255,255,255,.93);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.35;box-shadow:0 2px 10px rgba(0,0,0,.18)}#fsInfo table{font-size:11px;width:100%}#fsInfo .fk{display:flex;gap:10px;margin:6px 0}#fsInfo .fk b{font-size:17px;display:block}#fsInfo .wxs{margin:4px 0;padding:4px 8px;font-size:12px}
+body.fsC header,body.fsC #tabsMain,body.fsC #noCuve,body.fsC #wx1,body.fsC #setCard,body.fsC #vChauf details,body.fsC #chFin,body.fsC #pocheBtn{display:none!important}body.fsC #mapc{position:fixed;inset:0;z-index:50;height:100vh!important;min-height:0;border-radius:0;margin:0;border:0}body.fsC #cuveBox{position:fixed;top:6px;left:6px;width:calc(100% - 62px);max-width:520px;z-index:60}body.fsC #cuveBox .big .v{font-size:26px}body.fsC #cuveBox .big .k{padding:6px 10px}body.fsC #cuveBox .card{padding:6px 8px;margin-top:4px!important;font-size:12px}body.fsC #spray{padding:10px;font-size:16px;margin-top:4px}body.fsC #cuveBtns{position:fixed;bottom:6px;left:6px;right:6px;z-index:60;max-width:520px}body.fsC #pauseBtn{margin-bottom:4px!important;padding:10px}body.fsC #pauseBox{position:fixed;bottom:110px;left:6px;right:6px;z-index:60}body.fsC #msg{position:fixed;bottom:110px;left:6px;right:6px;z-index:70}
 @media print{header,.tabs,#vChauf,.noprint,#mapc2,#bK,.msg,.wx{display:none!important}body{background:#fff}.card{border:0;padding:0}.bon{break-inside:avoid;border:1px solid #999}}
 </style>
 </head>
@@ -123,7 +124,7 @@ body.fs header,body.fs #tabsMain,body.fs #bTabs,body.fs #msg{display:none!import
   <div style="height:8px"></div>
  </div>
  <div class="card wx cp" id="wx1"><div class="wxh"><h2 style="margin:0">Météo</h2><span class="sm wxt"></span></div><div class="wxs">Chargement…</div><div class="wxg"></div><div class="row2" style="margin:8px 0 0"><button class="btn sec wxw" data-o="wind" style="padding:10px;font-size:14px">Vent (Windy)</button><button class="btn sec wxw" data-o="rain" style="padding:10px;font-size:14px">Pluie (Windy)</button></div></div>
- <div id="mapc"><canvas id="map"></canvas><div class="mb"><button id="zIn">+</button><button id="zOut">−</button><button id="follow" class="on" title="Suivre le tracteur">◎</button></div></div>
+ <div id="mapc"><canvas id="map"></canvas><div class="mb"><button id="zIn">+</button><button id="zOut">−</button><button id="follow" class="on" title="Suivre le tracteur">◎</button><button id="fsCBtn" title="Plein écran">⛶</button></div></div>
  <div style="height:8px"></div>
  <div class="hide" id="cuveBtns"><button class="btn org" id="pauseBtn" style="margin-bottom:10px">Pause</button><div class="row2"><button class="btn red" id="endCuve">Cuve vide</button><button class="btn sec" id="cancelCuve">Annuler la cuve</button></div></div>
  <details class="card"><summary>Mes cuves et bons du jour</summary><div id="dayTbl" class="sm">Aucune cuve.</div><div id="myBons"></div></details>
@@ -252,6 +253,7 @@ const pid=new Uint8Array(GW*GH), tot=new Uint32Array(NAMES.length+1);
 })();
 const parcHa=i=>tot[i]*CELL*CELL/1e4;
 function cpAt(x,y){const L=S.cp;if(!L)return '';for(const g of L){const b=g.b;if(x<b[0]||x>b[2]||y<b[1]||y>b[3])continue;const p=g.p,n=p.length/2;let ins=false;for(let i=0,j=n-1;i<n;j=i++){const xi=p[2*i],yi=p[2*i+1],xj=p[2*j],yj=p[2*j+1];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))ins=!ins;}if(ins)return g.n;}return '';}
+const outRN=(x,y)=>x<0||y<0||x>G.w||y>G.h;
 function parcAt(x,y){const cx=Math.round(x/CELL),cy=Math.round(y/CELL);if(cx<0||cy<0||cx>=GW||cy>=GH)return 0;return pid[cy*GW+cx];}
 
 /* couverture : cellules touchées par la bande de traitement */
@@ -285,7 +287,7 @@ function build(pts,cfg,cov0){
 function sprayedHa(pts,cfg,t0,t1){
  let prev=null,d=0;
  for(const p of pts){if(p[0]<t0||(t1&&p[0]>t1))continue;if(p[4]>cfg.acc)continue;
-  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3]&&(S.noGeo||(S.free&&!S.chId)||(S.cp?cpAt((p[1]+prev[1])/2,(p[2]+prev[2])/2):parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2))))d+=dd;}
+  if(prev&&!p[5]){const dd=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&dd/dt<=MAXV&&dt<120&&p[3]&&prev[3]&&(S.noGeo||(S.free&&!S.chId)||(!S.cp&&outRN((p[1]+prev[1])/2,(p[2]+prev[2])/2))||(S.cp?cpAt((p[1]+prev[1])/2,(p[2]+prev[2])/2):parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2))))d+=dd;}
   prev=p;}
  return {m:d,ha:d*SW(cfg)/1e4};
 }
@@ -352,7 +354,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=28;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=29;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -415,7 +417,7 @@ function renderChauf(){
   const sp=$('spray');sp.className='btn '+(S.on?'on':'off');sp.textContent=S.on?'Canon en marche':'Canon arrêté — toucher pour démarrer';
  }
  /* parcelle courante */
- if(lastPos){const i=S.noGeo?0:parcAt(lastPos[0],lastPos[1]);$('parcInfo').innerHTML=(S.vNow!=null?'Vitesse : <b>'+f1(S.vNow)+' km/h</b>'+(S.cfg.vit?' (cible '+f1(S.cfg.vit)+')':'')+' · ':'')+(S.cp?((cpAt(lastPos[0],lastPos[1])?'Parcelle : <b>'+esc(cpAt(lastPos[0],lastPos[1]))+'</b>':'Hors parcellaire du client')):S.noGeo?'Sans parcellaire : surface tracée':(i?'Parcelle : <b>'+NAMES[i-1]+'</b> · couverte à <b>'+Math.round(100*built.cov.n[i]/tot[i])+' %</b> ('+f1(parcHa(i))+' ha)':'Hors parcelle de production'));$('parcCard').classList.toggle('hide',!!S.noGeo);}
+ if(lastPos){const i=S.noGeo?0:parcAt(lastPos[0],lastPos[1]);$('parcInfo').innerHTML=(S.vNow!=null?'Vitesse : <b>'+f1(S.vNow)+' km/h</b>'+(S.cfg.vit?' (cible '+f1(S.cfg.vit)+')':'')+' · ':'')+(S.cp?((cpAt(lastPos[0],lastPos[1])?'Parcelle : <b>'+esc(cpAt(lastPos[0],lastPos[1]))+'</b>':'Hors parcellaire du client')):(S.noGeo||outRN(lastPos[0],lastPos[1]))?'Sans parcellaire : surface tracée':(i?'Parcelle : <b>'+NAMES[i-1]+'</b> · couverte à <b>'+Math.round(100*built.cov.n[i]/tot[i])+' %</b> ('+f1(parcHa(i))+' ha)':'Hors parcelle de production'));$('parcCard').classList.toggle('hide',!!S.noGeo);}
  /* tableau du jour */
  const rows=S.cuves.concat(c?[c]:[]);
  $('dayTbl').innerHTML=rows.length?'<table><tr><th>Cuve</th><th>Heure</th><th class="n">Obj.</th><th class="n">Fait</th><th class="n">Écart</th></tr>'+rows.map(k=>{const r=cuveStats(k),e=k.obj?(r.ha-k.obj)/k.obj:0;const cl=!k.end?'':Math.abs(e)<=.1?'ok':Math.abs(e)<=.2?'wa':'ko';
@@ -546,7 +548,7 @@ function purgeCuve(c){if(!FB.ok)return;const m=FB.m,db=FB.db,ids=(S.ptIds||[]).s
   m.setDoc(m.doc(db,'live',WID()),{who:S.who||'',t:Date.now(),etat:'entre deux cuves',on:0,day:S.day,uid:FB.uid,x:null,y:null,acc:null,parc:'',cuve:null}).catch(()=>{});}catch(e){}}
 function makeBon(c){const per={};let prev=null;
  for(const p of S.pts){if(p[0]<c.start||p[0]>c.end)continue;if(p[4]>S.cfg.acc){continue;}
-  if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=S.cp?0:parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=S.cp?(cpAt((p[1]+prev[1])/2,(p[2]+prev[2])/2)||'Hors parcelle'):(i&&!S.noGeo?NAMES[i-1]:(S.noGeo?'Surface tracée':(S.free?'Surface tracée':'Hors parcelle')));per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
+  if(prev&&!p[5]&&p[3]&&prev[3]){const d=Math.hypot(p[1]-prev[1],p[2]-prev[2]),dt=(p[0]-prev[0])/1000;if(dt>0&&d/dt<=MAXV&&dt<120){const i=S.cp?0:parcAt((p[1]+prev[1])/2,(p[2]+prev[2])/2);const k=S.cp?(cpAt((p[1]+prev[1])/2,(p[2]+prev[2])/2)||'Hors parcelle'):(i&&!S.noGeo?NAMES[i-1]:((S.noGeo||S.free||outRN((p[1]+prev[1])/2,(p[2]+prev[2])/2))?'Surface tracée':'Hors parcelle'));per[k]=(per[k]||0)+d*SW(S.cfg)/1e4;}}prev=p;}
  const parc=Object.entries(per).filter(x=>x[1]>=0.05&&x[0]!=='Hors parcelle').sort((a,b)=>b[1]-a[1]).map(([n,ha])=>Object.assign({n,ha:Math.round(ha*100)/100},S.cp?{s:Math.round(S.cp.filter(g=>g.n===n).reduce((a,g)=>a+g.ha,0)*100)/100}:{}));
  return {day:S.day,who:S.who||'',n:c.n,vol:c.vol,start:c.start,end:c.end,ha:Math.round((c.ha||0)*100)/100,obj:Math.round(c.obj*100)/100,dose:S.cfg.dose,prep:c.prep||[],eau:c.eau||null,client:c.client||'',donneur:c.donneur||'',note:c.note||'',wx:c.wx||null,bt:c.bt||0,chId:c.chId||'',parc,ecart:c.obj?Math.round((c.ha-c.obj)/c.obj*100):0,presta:S.presta||''};}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
@@ -830,6 +832,9 @@ function showTab(t){$('setCard').classList.toggle('hide',t==='b');$('tChauf').cl
  if(t==='b'){$('mCode').classList.add('hide');startBureau();}else{if(FB.auth&&!FB.ok&&!FB.boss&&!S.member)$('mCode').classList.remove('hide');M1.draw();if(!S.who)askWho();if(!gpsStarted){gpsStarted=true;startGPS();keepAwake();}}}
 let gpsStarted=false;
 $('tChauf').onclick=()=>showTab('c');$('tBur').onclick=()=>showTab('b');
+function fsCSet(on){document.body.classList.toggle('fsC',on);$('fsCBtn').textContent=on?'✕':'⛶';try{if(on&&document.documentElement.requestFullscreen&&!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});if(!on&&document.fullscreenElement)document.exitFullscreen().catch(()=>{});}catch(e){}setTimeout(()=>{lrT=0;renderChauf();M1.draw();},150);}
+$('fsCBtn').onclick=()=>fsCSet(!document.body.classList.contains('fsC'));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('fsC'))fsCSet(false);});
 $('fsBtn').onclick=()=>fsSet(true);
 let bTab='ch';try{bTab=localStorage.getItem('cerco_btab')||'ch'}catch(e){}
 function showBTab(t){bTab=t;try{localStorage.setItem('cerco_btab',t)}catch(e){}document.querySelectorAll('#bTabs button').forEach(b=>b.classList.toggle('on',b.dataset.bt===t));document.querySelectorAll('#bBody [data-bt]:not(button)').forEach(e=>e.classList.toggle('hide',e.dataset.bt!==t));if(t==='live'&&typeof M2!=='undefined'&&M2){setTimeout(()=>{try{window.dispatchEvent(new Event('resize'));renderBureau();}catch(e){}},50);}}
