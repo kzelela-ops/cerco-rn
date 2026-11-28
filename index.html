@@ -186,9 +186,9 @@ body.fsC header,body.fsC #tabsMain,body.fsC #noCuve,body.fsC #wx1,body.fsC #setC
 </main>
 
 <div class="modal hide" id="mCuve"><div class="card">
- <h2>Nouvelle cuve</h2><div id="chSel"></div><div class="sm">Surface à traiter avec cette cuve :</div>
- <div class="vols"><button data-v="12">12 ha</button><button data-v="15">15 ha</button><button data-v="16">16 ha</button></div>
- <input type="number" id="volFree" step="any" placeholder="Autre surface (ha)">
+ <h2>Nouvelle cuve</h2><div id="chSel"></div><div class="sm">Surface par cuve (réglée au bureau pour ce client) :</div>
+ <div class="vols hide"><button data-v="12">12 ha</button><button data-v="15">15 ha</button><button data-v="16">16 ha</button></div>
+ <input type="number" id="volFree" class="hide" step="any">
  <div class="sm" id="volObj" style="margin:10px 0;font-size:16px">&nbsp;</div>
  <div id="prep"></div>
  <label class="chk hide" id="prepChkL"><input type="checkbox" id="prepChk"> Cuve préparée selon la consigne</label>
@@ -370,7 +370,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=33;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=34;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
