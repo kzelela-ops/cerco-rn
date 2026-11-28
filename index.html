@@ -304,6 +304,7 @@ function MapView(canvas){
  window.addEventListener('resize',()=>this.draw());
 }
 MapView.prototype.fit=function(){const r=this.cv.getBoundingClientRect();this.s=Math.min(r.width/G.w,r.height/G.h)*0.95;this.ox=(r.width-G.w*this.s)/2;this.oy=(r.height-G.h*this.s)/2;};
+MapView.prototype.fitBox=function(a,b,A,B){const r=this.cv.getBoundingClientRect();if(r.width<10)return false;this.s=Math.min(r.width/(A-a),r.height/(B-b));this.ox=(r.width-(A-a)*this.s)/2-a*this.s;this.oy=(r.height-(B-b)*this.s)/2-b*this.s;return true;};
 MapView.prototype.zoom=function(f,cx,cy){const r=this.cv.getBoundingClientRect();if(cx==null){cx=r.width/2;cy=r.height/2;}const ns=Math.max(0.05,Math.min(8,this.s*f));const k=ns/this.s;this.ox=cx-(cx-this.ox)*k;this.oy=cy-(cy-this.oy)*k;this.s=ns;this.draw();};
 MapView.prototype.setFollow=function(v){this.follow=v;const b=this.followBtn;if(b)b.classList.toggle('on',v);};
 MapView.prototype.setCov=function(cov){
@@ -346,7 +347,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=22;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=23;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
@@ -831,7 +832,7 @@ function startBureau(){
  $('bWho').textContent=(FB.email?FB.email+' ':'')+(FB.admin?'(administrateur)':'(prestataire'+(PRESTA.nom?' '+PRESTA.nom:'')+')');purgeOld();renderAcc();subChantiers();
  if(!M2){$('mapc2').innerHTML='<div id="mapc" style="height:55vh"><canvas id="map2" style="width:100%;height:100%;display:block"></canvas><div class="mb"><button id="z2In">+</button><button id="z2Out">−</button><button id="f2">◎</button></div></div>';
   M2=new MapView($('map2'));M2.followBtn=$('f2');M2.setFollow(false);M2.larg=S.cfg.larg;
-  $('z2In').onclick=()=>M2.zoom(1.4);$('z2Out').onclick=()=>M2.zoom(1/1.4);$('f2').onclick=()=>{M2.setFollow(!M2.follow);if(!M2.follow)M2.fit();M2.draw();};
+  $('z2In').onclick=()=>M2.zoom(1.4);$('z2Out').onclick=()=>M2.zoom(1/1.4);$('f2').onclick=()=>{M2.setFollow(!M2.follow);if(!M2.follow){M2._fk=null;renderBureau();return;}M2.draw();};
   $('bDay').value=bDay;$('bDay').onchange=()=>{bDay=$('bDay').value;subBureau();};$('bToday').onclick=()=>{bDay=dayOf(Date.now());$('bDay').value=bDay;subBureau();};}
  renderCons();
  if(!FB.ok){$('bLive').textContent='Suivi bureau non relié : affichage des données de ce téléphone seulement.';bBons={};(S.bons||[]).forEach((b,i)=>bBons[i]=b);renderBons();bPts={local:{who:S.who||'Ce téléphone',p:S.pts}};bCuves={};S.cuves.concat(S.cur?[S.cur]:[]).forEach(c=>bCuves[c.id]=Object.assign({},c,{ha:cuveStats(c).ha,who:S.who||''}));renderBureau();return;}
@@ -864,6 +865,9 @@ function renderBureau(){
  $('bCuves').innerHTML=cs.length?'<table><tr><th>Chauffeur</th><th>Cuve</th><th>Heure</th><th class="n">Obj.</th><th class="n">Fait</th><th class="n">Écart</th></tr>'+cs.map(k=>{const e=k.obj?((k.ha||0)-k.obj)/k.obj:0;const cl=!k.end?'':Math.abs(e)<=.1?'ok':Math.abs(e)<=.2?'wa':'ko';
   return '<tr><td>'+(k.who||'')+'</td><td>'+k.n+' · '+k.vol+' L</td><td>'+hm(k.start)+(k.end?'–'+hm(k.end):' (en cours)')+'</td><td class="n">'+f1(k.obj)+'</td><td class="n">'+f1(k.ha||0)+'</td><td class="n '+cl+'">'+(k.end?(e>0?'+':'')+Math.round(e*100)+' %':'')+'</td></tr>'}).join('')+'</table>':'Aucune cuve.';
  renderParcTbl($('bParc'),B.cov);
+ {const P=[];M2.others.forEach(o=>{if(o.x!=null)P.push([o.x,o.y]);});tracks.forEach(t=>t.pts.forEach(q=>P.push([q[1],q[2]])));
+  const out=P.filter(p=>p[0]<-50||p[1]<-50||p[0]>G.w+50||p[1]>G.h+50);const key=out.length?'o'+Math.round(out[0][0]/2000)+'_'+Math.round(out[0][1]/2000):'rn';
+  if(M2._fk!==key){let ok=true;if(out.length){let a=1e12,b=1e12,A=-1e12,B2=-1e12;out.forEach(p=>{a=Math.min(a,p[0]);b=Math.min(b,p[1]);A=Math.max(A,p[0]);B2=Math.max(B2,p[1]);});const cx=(a+A)/2,cy=(b+B2)/2,h=Math.max(300,(A-a)/2+150,(B2-b)/2+150);ok=M2.fitBox(cx-h,cy-h,cx+h,cy+h);}else{const r=M2.cv.getBoundingClientRect();if(r.width<10)ok=false;else M2.fit();}if(ok)M2._fk=key;}}
  M2.draw();
 }
 
