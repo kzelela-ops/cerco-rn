@@ -326,6 +326,10 @@ MapView.prototype.draw=function(){
  if(this.cov){c.imageSmoothingEnabled=false;c.drawImage(this.covImg,0,0,GW*CELL,GH*CELL);}
  /* trace */
  const TR=this.tracks||[{pts:this.pts,col:'#0b3d20'}];
+ /* balayage du canon hors parcellaire Rivière Noire (la grille ne couvre que RN) */
+ {const L=S.cfg.larg||20,sd=S.cfg.side||'D',o=sd==='2'?0:(sd==='G'?-1:1)*L/2,out=(x,y)=>x<0||y<0||x>G.w||y>G.h;c.beginPath();let any=false;
+  for(const tr of TR){let prev=null;for(const p of (tr.pts||[])){if(prev&&!p[5]&&p[3]&&prev[3]&&(out(p[1],p[2])||out(prev[1],prev[2]))){const dx=p[1]-prev[1],dy=p[2]-prev[2],d=Math.hypot(dx,dy);if(d>0&&d<200){const nx=-dy/d*o,ny=dx/d*o;c.moveTo(prev[1]+nx,prev[2]+ny);c.lineTo(p[1]+nx,p[2]+ny);any=true;}}prev=p;}}
+  if(any){c.lineWidth=sd==='2'?2*L:L;c.lineCap='butt';c.lineJoin='round';c.strokeStyle='rgba(46,160,90,.38)';c.stroke();}}
  c.lineWidth=Math.max(1.5/s,0.6);c.lineJoin='round';
  for(const tr of TR){let prev=null;for(const p of tr.pts){if(prev&&!p[5]){c.beginPath();c.moveTo(prev[1],prev[2]);c.lineTo(p[1],p[2]);const on=p[3]&&prev[3];c.strokeStyle=on?tr.col:'#7a7a7a';c.setLineDash(on?[]:[4/s,4/s]);c.stroke();}prev=p;}}c.setLineDash([]);
  /* étiquettes */
@@ -347,7 +351,7 @@ let msgT=null;function msg(t,k){const m=$('msg');m.textContent=t;m.className='ms
 /* ---------- Firebase (facultatif) ---------- */
 const FB={ok:false,db:null,m:null};
 const BOSS='kzelela@gayac.mq';
-const APPV=24;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
+const APPV=25;(async()=>{try{const t=await fetch(location.pathname+'?nc='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/const APPV=(\d+);/);if(m&&+m[1]>APPV&&!sessionStorage.getItem('cerco_upd'+m[1])){sessionStorage.setItem('cerco_upd'+m[1],'1');location.replace(location.pathname+'?v='+m[1]+location.hash);}}catch(e){}})();
 async function initFB(){
  const cfg=window.FIREBASE_CONFIG;
  if(!cfg){$('netTxt').textContent='Hors ligne';return;}
